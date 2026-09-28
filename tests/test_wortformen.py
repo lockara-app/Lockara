@@ -31,7 +31,18 @@ FAELLE = [
     ("häuser", "hausratversicherung", True, "Umlaut-Mehrzahl auf -er"),
     ("straße", "strassenverkehrsordnung", True, "ss statt ß"),
 
+    # Kurze Woerter und Zahlen: nur als ganzes Wort (Kanzlei-Anfragen)
+    ("bgb", "nach § 536 abs. 1 bgb gemindert", True, "Gesetzesabkuerzung"),
+    ("zpo", "(§ 130d zpo)", True, "Abkuerzung in Klammern"),
+    ("bea", "das bea-postfach", True, "Abkuerzung vor Bindestrich"),
+    ("118", "az. 3 c 118/24", True, "Nummer aus einem Aktenzeichen"),
+    ("3100", "gebühr nr. 3100 vv rvg", True, "Nummer mit vier Ziffern"),
+
     # Was NICHT treffen darf
+    ("gez", "bereits gezahlt", False, "kurzes Wort nicht als Wortanfang"),
+    ("bea", "in bearbeitung", False, "kurzes Wort nicht als Wortanfang"),
+    ("118", "kennzeichen bi-mm 1180", False, "Zahl nicht als Teil einer Zahl"),
+    ("2024", "rechnung 20240131", False, "Zahl nicht als Teil einer Zahl"),
     ("auto", "waschvollautomat garantie", False, "nicht mitten im Wort"),
     ("drucker", "anlagendruck erhöht", False, "kein Stamm 'druck'"),
     ("kosten", "kostüm für fasching", False, "kein Stamm 'kost'"),
