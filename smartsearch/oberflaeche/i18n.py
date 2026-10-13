@@ -152,7 +152,7 @@ TRANSLATIONS = {
         "time.under_minute": "< 1 Min.",
         "time.minutes": "{minuten} Min.",
         "time.hours": "{stunden} Std. {minuten} Min.",
-        "index.progress_vectors": "Berechne KI-Vektoren (Batch {batch}/{batches})...",
+        "index.progress_vectors": "Bereite die Suche vor ({batch} von {batches})",
 
         # Nicht lesbare Dateien
         "errors.dialog_title": "Dateien ohne durchsuchbaren Text",
@@ -407,7 +407,7 @@ TRANSLATIONS = {
         "time.under_minute": "< 1 min",
         "time.minutes": "{minuten} min",
         "time.hours": "{stunden} h {minuten} min",
-        "index.progress_vectors": "Computing AI vectors (batch {batch}/{batches})...",
+        "index.progress_vectors": "Preparing search ({batch} of {batches})",
 
         # Unreadable files
         "errors.dialog_title": "Files without searchable text",
