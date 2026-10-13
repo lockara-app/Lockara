@@ -110,6 +110,9 @@ TRANSLATIONS = {
         # Suchbereich
         "search.placeholder": "Wonach suchen Sie?",
         "search.button": "Suchen",
+        "history.title": "Letzte Suchen",
+        "history.clear": "Suchverlauf löschen",
+        "history.cleared": "Suchverlauf gelöscht",
         "filter.all_time": "Alle Zeiträume",
         "filter.7_days": "Letzte 7 Tage",
         "filter.this_month": "Dieser Monat",
@@ -146,6 +149,9 @@ TRANSLATIONS = {
         "index.notification_body": "Die Indexierung ist abgeschlossen.",
         "index.progress_indexing": "Indexiere {n} von {gesamt}: {name} – noch etwa {zeit}",
         "index.progress_calculating": "{text} – noch etwa {zeit}",
+        "time.under_minute": "< 1 Min.",
+        "time.minutes": "{minuten} Min.",
+        "time.hours": "{stunden} Std. {minuten} Min.",
         "index.progress_vectors": "Berechne KI-Vektoren (Batch {batch}/{batches})...",
 
         # Nicht lesbare Dateien
@@ -357,6 +363,9 @@ TRANSLATIONS = {
         # Search area
         "search.placeholder": "What are you looking for?",
         "search.button": "Search",
+        "history.title": "Recent searches",
+        "history.clear": "Clear search history",
+        "history.cleared": "Search history cleared",
         "filter.all_time": "All dates",
         "filter.7_days": "Last 7 days",
         "filter.this_month": "This month",
@@ -393,6 +402,9 @@ TRANSLATIONS = {
         "index.notification_body": "Indexing has finished.",
         "index.progress_indexing": "Indexing {n} of {gesamt}: {name} – about {zeit} left",
         "index.progress_calculating": "{text} – about {zeit} left",
+        "time.under_minute": "< 1 min",
+        "time.minutes": "{minuten} min",
+        "time.hours": "{stunden} h {minuten} min",
         "index.progress_vectors": "Computing AI vectors (batch {batch}/{batches})...",
 
         # Unreadable files

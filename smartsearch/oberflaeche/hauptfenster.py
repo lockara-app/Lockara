@@ -33,7 +33,7 @@ from smartsearch.kern import ordner as ordner_verwaltung
 from smartsearch.kern import rueckmeldung
 from smartsearch.kern.pfade import INDEX_FILE
 from smartsearch.kern.ueberwachung import Ordnerwaechter
-from smartsearch.oberflaeche import farben, i18n, trefferkarte
+from smartsearch.oberflaeche import farben, i18n, trefferkarte, verlaufsliste
 from smartsearch.oberflaeche.dialoge import einfuehrung, fehlerliste, meldungen
 from smartsearch.oberflaeche.dialoge import einstellungen as einstellungen_dialog
 from smartsearch.oberflaeche.dialoge import ordner as ordner_dialog
@@ -75,13 +75,11 @@ def dauer_text(sekunden):
     für die Fortschrittsanzeige bei der Indexierung."""
     sekunden = max(0, sekunden)
     if sekunden < 60:
-        return "< 1 Min"
+        return t("time.under_minute")
     minuten = int(sekunden // 60)
     if minuten < 60:
-        return f"{minuten} Min"
-    stunden = minuten // 60
-    rest_minuten = minuten % 60
-    return f"{stunden} Std {rest_minuten} Min"
+        return t("time.minutes", minuten=minuten)
+    return t("time.hours", stunden=minuten // 60, minuten=minuten % 60)
 
 
 class Hauptfenster(ctk.CTk):
@@ -281,7 +279,16 @@ class Hauptfenster(ctk.CTk):
             self.top_frame, font=("Helvetica", 13), height=34, border_width=0, placeholder_text=PLATZHALTER_TEXT
         )
         self.suchfeld.grid(row=0, column=1, padx=4, pady=4, sticky="ew")
-        self.suchfeld.bind("<Return>", lambda event: self.suchen())
+        self.suchfeld.bind("<Return>", self._eingabe_im_suchfeld)
+
+        # Die letzten Suchanfragen, aufklappbar unter dem Suchfeld
+        # (oberflaeche/verlaufsliste.py).
+        self.verlaufsliste = verlaufsliste.Verlaufsliste(
+            self.main_frame, self.suchfeld,
+            hole_verlauf=lambda: self.verlauf,
+            bei_auswahl=lambda anfrage: self.suchen(),
+            bei_loeschen=self.verlauf_loeschen,
+            platzhalter=PLATZHALTER_TEXT)
 
         self.such_button = ctk.CTkButton(self.top_frame, text=t("search.button"), width=75, height=34, font=("Helvetica", 11, "bold"), command=self.suchen)
         self.such_button.grid(row=0, column=2, padx=(4, 6), pady=4)
@@ -1059,6 +1066,19 @@ class Hauptfenster(ctk.CTk):
 
     # ---------- VERLAUF & HELPER ----------
 
+    def _eingabe_im_suchfeld(self, event=None):
+        # Ist in der Verlaufsliste ein Eintrag markiert, sucht die Liste
+        # selbst danach - sonst wuerde zweimal gesucht.
+        if self.verlaufsliste.eingabe_abfangen():
+            return "break"
+        self.suchen()
+        return "break"
+
+    def verlauf_loeschen(self):
+        self.verlauf = []
+        einstellungen.speichere_verlauf([])
+        self.setze_status(t("history.cleared"))
+
     def verlauf_aktualisieren(self, anfrage):
         if not anfrage or anfrage == PLATZHALTER_TEXT:
             return
@@ -1394,6 +1414,7 @@ class Hauptfenster(ctk.CTk):
         if not anfrage or anfrage == PLATZHALTER_TEXT:
             return
 
+        self.verlaufsliste.schliessen()
         self.verlauf_aktualisieren(anfrage)
         self._suche_button_sperren()
         self.setze_status(t("search.status_searching"))

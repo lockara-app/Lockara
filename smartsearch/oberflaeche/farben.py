@@ -55,6 +55,10 @@ FLAECHE      = ("#eeeeec", "#1c1f25")   # Rahmen, Karten
 FLAECHE_HOCH = ("#e5e5e2", "#23272e")   # abgesetzte Bereiche, Reiter
 FELD         = ("#ffffff", "#23272e")   # Eingabefelder
 LINIE        = ("#dddcd7", "#2d323a")   # Trennlinien, Rahmen
+# Markierte Zeile in Listen (Suchverlauf). Nicht FLAECHE_HOCH: das ist im
+# dunklen Modus genau der Ton von FELD - die Markierung war dort unsichtbar
+# (aufgefallen beim Test am Mac, 13.10.2026).
+MARKIERT     = ("#e2e1dc", "#353b46")
 TEXT         = ("#2c3340", "#d2d6dd")   # Fliesstext
 GEDAEMPFT    = ("#61697a", "#98a0ac")   # Nebenangaben, Statuszeile
 
