@@ -35,8 +35,12 @@ def karte_zeichnen(app, eltern, score, eintrag, such_woerter):
     lbl_badge = ctk.CTkLabel(zeile_oben, text=f" {ext.replace('.','').upper()} ", font=("Helvetica", 9, "bold"), fg_color=bg_col, text_color=fg_col, corner_radius=4)
     lbl_badge.pack(side="left", padx=8, pady=8)
 
-    lbl_titel = ctk.CTkLabel(zeile_oben, text=f"[{score:.2f}] {kuerze_dateiname(name)}", font=("Helvetica", 11, "bold"), text_color=farben.DATEINAME)
+    lbl_titel = ctk.CTkLabel(zeile_oben, text=kuerze_dateiname(name), font=("Helvetica", 11, "bold"), text_color=farben.DATEINAME)
     lbl_titel.pack(side="left", padx=4)
+    # Frueher stand vor dem Namen die Trefferwertung ("[0.72] ..."). Fuer
+    # Nutzer sagt die Zahl nichts - sie schwankt je nach Anfrage, und 0.55
+    # kann ein guter Treffer sein. Die Reihenfolge der Karten zeigt die
+    # Rangfolge; die Zahlen selbst zeigt werkzeuge/such_diagnose.py.
 
     btn_sim = ctk.CTkButton(zeile_oben, text=t("card.similar"), width=65, height=20, font=("Helvetica", 9), fg_color=farben.SEITE_KNOPF, hover_color=farben.SEITE_KNOPF_HOVER, command=lambda p=pfad: app.aehnliche_suchen(p))
     btn_sim.pack(side="right", padx=2)

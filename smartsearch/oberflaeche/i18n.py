@@ -146,7 +146,7 @@ TRANSLATIONS = {
         "index.notification_body": "Die Indexierung ist abgeschlossen.",
         "index.progress_indexing": "Indexiere {n} von {gesamt}: {name} – noch etwa {zeit}",
         "index.progress_calculating": "{text} – noch etwa {zeit}",
-        "index.progress_vectors": "Berechne KI-Vektoren (Batch {batch}/{batches})...",
+        "index.progress_vectors": "Bereite die Suche vor ({batch} von {batches})",
 
         # Nicht lesbare Dateien
         "errors.dialog_title": "Dateien ohne durchsuchbaren Text",
@@ -393,7 +393,7 @@ TRANSLATIONS = {
         "index.notification_body": "Indexing has finished.",
         "index.progress_indexing": "Indexing {n} of {gesamt}: {name} – about {zeit} left",
         "index.progress_calculating": "{text} – about {zeit} left",
-        "index.progress_vectors": "Computing AI vectors (batch {batch}/{batches})...",
+        "index.progress_vectors": "Preparing search ({batch} of {batches})",
 
         # Unreadable files
         "errors.dialog_title": "Files without searchable text",
