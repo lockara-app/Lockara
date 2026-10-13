@@ -162,6 +162,16 @@ def starten():
     if plattform.SYMBOL_VERFUEGBAR:
         plattform.programmnamen_setzen("SmartSearch")
 
+    # numpy einmal hier im Hauptthread laden, BEVOR Hintergrund-Threads
+    # starten. Sonst laden beim Start zwei Threads numpy gleichzeitig (das
+    # Vorladen des Suchmodells und das Lesen des Index - pickle braucht
+    # numpy fuer die Vektoren). Python bricht einen der beiden Importe dann
+    # mit "deadlock detected by _ModuleLock" ab, der Index galt als
+    # unlesbar, und SmartSearch baute ihn ohne Not komplett neu auf - mit
+    # der irrefuehrenden Meldung, das Suchmodell habe sich geaendert.
+    # Gefunden am 13.10.2026 beim Testen.
+    import numpy  # noqa: F401
+
     # Erst hier importiert: die Oberflaeche zieht customtkinter und das
     # Farbthema nach sich. Fuer --selbsttest und eine zweite Kopie, die
     # sich gleich wieder beendet, ist das unnoetig.
