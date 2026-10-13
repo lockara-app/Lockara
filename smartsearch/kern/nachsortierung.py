@@ -78,14 +78,17 @@ ABGESCHALTET = os.environ.get("SMARTSEARCH_OHNE_NACHSORTIERUNG") == "1"
 
 # Wie viele Dokumente der ersten Stufe der Nachsortierer liest, und je
 # Dokument wie viele Abschnitte (die mit der hoechsten Vektor-Aehnlichkeit).
-# Die Rechenzeit waechst mit Kandidaten x Abschnitten. Gemessen:
+# Die Rechenzeit waechst mit Kandidaten x Abschnitten. Gemessen am Testset
+# (Cloud; auf dem Mac 6 x 2: 58 richtig, 13 Fehlgriffe):
 #     6 x 2: 59 richtig     8 x 2: 58     14 x 2: 58
 #     8 x 1: 51             14 x 1: 51
 # Der zweite Abschnitt je Dokument zaehlt also viel, weitere Kandidaten
-# kaum. 8 x 2 = 16 Abschnitte je Suche laesst Luft fuer groessere
-# Bestaende, in denen das Richtige seltener ganz vorn in der ersten Stufe
-# steht.
-KANDIDATEN = 8
+# kaum. Und jeder Abschnitt kostet: auf einem MacBook Air (10.10.2026)
+# rund 0,3 s, 16 Abschnitte also knapp 5 s. CoreML (Grafikchip) und eine
+# andere 8-Bit-Rechnung brachten nichts Entscheidendes (siehe
+# docs/messungen/2026-10-10_mac_tempo.txt). Deshalb 6 x 2 = 12 Abschnitte,
+# und die Oberflaeche zeigt die erste Stufe sofort (Hauptfenster._suche_bg).
+KANDIDATEN = 6
 ABSCHNITTE_JE_DOKUMENT = 2
 
 # Ein Abschnitt ist hoechstens 350 Zeichen lang (dateien.py), zusammen mit
@@ -172,6 +175,10 @@ class Nachsortierer:
 _cache = None
 _cache_lock = threading.Lock()
 _fehlgeschlagen = False
+
+
+def ist_fehlgeschlagen():
+    return _fehlgeschlagen
 
 
 def geladener_nachsortierer():

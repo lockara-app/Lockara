@@ -122,7 +122,12 @@ def _zeitraum_cutoff(zeitraum):
     return None
 
 
-def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
+def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None,
+                 nachsortieren=True):
+    """Die Suche. nachsortieren=False liefert nur die erste Stufe - in
+    Millisekunden. Die Oberflaeche zeigt das sofort an und ruft danach mit
+    nachsortieren=True die genaue Fassung ab (siehe Hauptfenster._suche_bg):
+    der Nachsortierer braucht auf einem MacBook Air einige Sekunden."""
     if not os.path.exists(INDEX_FILE):
         return None
 
@@ -260,7 +265,7 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
     dokumente.sort(key=lambda d: (-d["gesamt"], -d["semantik"], d["pfad"]))
 
     # Zweite Stufe, wenn das Modell dabei ist (kern/nachsortierung.py).
-    nachsortierer = nachsortierung.geladener_nachsortierer()
+    nachsortierer = nachsortierung.geladener_nachsortierer() if nachsortieren else None
     if nachsortierer is not None:
         try:
             return _nachsortieren(anfrage, dokumente, nachsortierer)[:top_n]
@@ -276,6 +281,12 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
         rohe_treffer = [p for p in rohe_treffer if p[0] >= mindestwert]
 
     return rohe_treffer[:top_n]
+
+
+def nachsortierung_aktiv():
+    """True, wenn suche_intern(nachsortieren=True) mehr tut als die erste
+    Stufe - die Oberflaeche zeigt dann zuerst die schnelle Fassung."""
+    return nachsortierung.ist_vorhanden() and not nachsortierung.ist_fehlgeschlagen()
 
 
 # Fuer werkzeuge/such_diagnose.py: was die Nachsortierung bei der letzten

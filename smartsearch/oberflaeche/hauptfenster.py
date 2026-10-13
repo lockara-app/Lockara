@@ -1404,12 +1404,35 @@ class Hauptfenster(ctk.CTk):
         zeitraum_anzeige = self.zeitraum_menu.get()
         zeitraum = self.zeitraum_anzeige_zu_code.get(zeitraum_anzeige, "alle")
 
-        threading.Thread(target=self._suche_bg, args=(anfrage, ausschluss, zeitraum), daemon=True).start()
+        # Jede Suche bekommt eine Nummer. Ergebnisse einer aelteren Suche,
+        # die erst nach einer neueren fertig wird, werden verworfen - sonst
+        # koennte die Nachsortierung einer alten Anfrage die Treffer der
+        # neuen ueberschreiben.
+        self._such_nummer = getattr(self, "_such_nummer", 0) + 1
+        threading.Thread(target=self._suche_bg,
+                         args=(anfrage, ausschluss, zeitraum, self._such_nummer),
+                         daemon=True).start()
 
-    def _suche_bg(self, anfrage, ausschluss, zeitraum):
+    def _suche_bg(self, anfrage, ausschluss, zeitraum, nummer):
+        """Zwei Schritte, wenn der Nachsortierer dabei ist
+        (kern/nachsortierung.py): erst die erste Stufe - in Millisekunden
+        sichtbar -, dann die genaue Fassung, die einige Sekunden rechnet.
+        Gemessen auf einem MacBook Air (10.10.2026): erste Stufe 27 ms,
+        mit Nachsortierung rund 5 s. Fuenf Sekunden auf eine leere Liste
+        zu schauen, fuehlt sich kaputt an; dieselbe Zeit mit Treffern, die
+        noch "geprueft" werden, nicht."""
         try:
+            zweistufig = suche.nachsortierung_aktiv()
+            if zweistufig:
+                vorab = suche.suche_intern(anfrage, top_n=15, ausgeschlossene_typen=ausschluss,
+                                           zeitraum=zeitraum, nachsortieren=False)
+                self.after(0, self._zeige_treffer, vorab, anfrage, nummer, True)
+                # Inzwischen schon wieder neu gesucht? Dann nicht mehr
+                # nachsortieren - das wuerde die neue Suche nur aufhalten.
+                if nummer != self._such_nummer:
+                    return
             treffer = suche.suche_intern(anfrage, top_n=15, ausgeschlossene_typen=ausschluss, zeitraum=zeitraum)
-            self.after(0, self._zeige_treffer, treffer, anfrage)
+            self.after(0, self._zeige_treffer, treffer, anfrage, nummer, False)
         except Exception as e:
             self.after(0, lambda e=e: self._suche_fehlgeschlagen(e))
 
@@ -1417,8 +1440,11 @@ class Hauptfenster(ctk.CTk):
         self._suche_button_entsperren()
         self.setze_status(t("search.status_error", fehler=fehler))
 
-    def _zeige_treffer(self, treffer, anfrage):
-        self._suche_button_entsperren()
+    def _zeige_treffer(self, treffer, anfrage, nummer=None, vorlaeufig=False):
+        if nummer is not None and nummer != getattr(self, "_such_nummer", nummer):
+            return   # Ergebnis einer aelteren Suche
+        if not vorlaeufig:
+            self._suche_button_entsperren()
         if treffer is None:
             self.setze_status(t("search.status_no_index"))
             self.aktuelle_treffer = []
@@ -1429,8 +1455,8 @@ class Hauptfenster(ctk.CTk):
         # Suchwoerter merken - die Trefferkarten faerben sie im
         # Textausschnitt ein (siehe zeige_aktuelle_ergebnisse).
         self.aktuelle_such_woerter = sprache.anfrage_woerter(anfrage)
-        self.zeige_aktuelle_ergebnisse()
-        if treffer:
+        self.zeige_aktuelle_ergebnisse(vorlaeufig=vorlaeufig)
+        if treffer and not vorlaeufig:
             self._rueckmeldung_zaehlen()
 
     def _null_treffer_hinweis(self, anfrage):
@@ -1450,19 +1476,29 @@ class Hauptfenster(ctk.CTk):
 
         return t("results.none_generic", anfrage=anfrage)
 
-    def zeige_aktuelle_ergebnisse(self):
+    def zeige_aktuelle_ergebnisse(self, vorlaeufig=False):
         for w in self.cards_scrollframe.winfo_children():
             w.destroy()
 
         self.card_widgets = []
         self.fokussierter_index = -1
 
+        if vorlaeufig:
+            # Die vorlaeufige Liste kann leer sein, obwohl die genaue Suche
+            # etwas findet - dann keinen "nichts gefunden"-Hinweis zeigen.
+            for score, eintrag in self.aktuelle_treffer or []:
+                card = trefferkarte.karte_zeichnen(
+                    self, self.cards_scrollframe, score, eintrag, self.aktuelle_such_woerter)
+                self.card_widgets.append((card, eintrag["datei"]))
+            self.setze_status(t("search.status_refining"))
+            return
+
         if not self.aktuelle_treffer:
             anfrage = self.suchfeld.get().strip()
             hinweis = self._null_treffer_hinweis(anfrage)
             ctk.CTkLabel(
                 self.cards_scrollframe, text=hinweis, font=("Helvetica", 12),
-                text_color="#78909c", justify="center", wraplength=600
+                text_color="#78909c", justify="center", wraplength=520
             ).pack(pady=40, padx=20)
             self.setze_status(t("search.status_no_results"))
             return
