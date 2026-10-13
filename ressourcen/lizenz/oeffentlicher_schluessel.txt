@@ -1,0 +1,3 @@
+# Oeffentlicher Schluessel fuer SmartSearch-Lizenzen (Ed25519).
+# Nicht geheim. Erzeugt mit werkzeuge/lizenz_ausstellen.py.
+OsM58XYxtxH9Um+45tyDrYBICBP8V2cMlMnqZ76D7WQ=
