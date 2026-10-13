@@ -28,8 +28,24 @@ DER NEUE WEG
 Wenn auf einem Rechner doch pytesseract vorhanden ist, wird es als
 Notnagel weiter genutzt - wer die alte Umgebung hat, verliert nichts.
 
-Installation der beiden benoetigten Pakete:
-    pip install pypdfium2 pyobjc-framework-Vision
+SEIT OKTOBER 2026: RAPIDOCR ZUERST, AUF ALLEN SYSTEMEN
+-----------------------------------------------------
+Vision gibt es nur auf dem Mac, unter Windows lief Tesseract. Derselbe
+Scan ergab damit je nach System einen anderen Text und einen anderen
+Index. RapidOCR (Apache-2.0, PaddleOCR-Modelle PP-OCRv6, mehrsprachig mit
+Deutsch) laeuft ueber onnxruntime - das ist ohnehin schon fuer das
+Suchmodell dabei - und bringt seine Modelle im pip-Paket mit (rund 25 MB),
+es wird also nichts nachgeladen.
+
+Gemessen am 13.10.2026 an den neun Scans im Testset, gegen den Text, aus
+dem die Scans erzeugt wurden (werkzeuge/ocr_vergleich.py):
+    RapidOCR   99,4 % der Woerter erkannt, Zeichen 98,3 %, 41 s
+    Tesseract  86,0 % der Woerter erkannt, Zeichen 96,2 %, 60 s
+Vision bleibt auf dem Mac als Ausweichweg, falls RapidOCR fehlt, danach
+Tesseract.
+
+Installation der benoetigten Pakete (stehen in requirements.txt):
+    pip install pypdfium2 rapidocr
 """
 
 import io
@@ -79,6 +95,14 @@ def _pruefe_pdfium():
         return False
 
 
+def _pruefe_rapidocr():
+    try:
+        import rapidocr  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
 def _pruefe_tesseract():
     """Nur der Notnagel-Pfad. Prueft nicht nur den Python-Import, sondern
     auch, ob das tesseract-Programm ueberhaupt erreichbar ist - genau
@@ -96,7 +120,7 @@ _engine_sperre = threading.Lock()
 
 
 def verfuegbare_engine():
-    """Gibt zurueck, womit OCR aktuell laeuft: "vision", "tesseract" oder
+    """Gibt zurueck, womit OCR aktuell laeuft: "rapidocr", "vision", "tesseract" oder
     None. Die GUI zeigt das im Hilfe-Tab an, damit fehlende Texterkennung
     nie wieder unbemerkt bleibt.
 
@@ -105,7 +129,9 @@ def verfuegbare_engine():
     schon gar nicht in mehreren Lese-Threads gleichzeitig."""
     with _engine_sperre:
         if not _engine_ergebnis:
-            if _pruefe_pdfium() and _pruefe_vision():
+            if _pruefe_pdfium() and _pruefe_rapidocr():
+                _engine_ergebnis.append("rapidocr")
+            elif _pruefe_pdfium() and _pruefe_vision():
                 _engine_ergebnis.append("vision")
             elif _pruefe_tesseract():
                 _engine_ergebnis.append("tesseract")
@@ -139,7 +165,78 @@ def _seiten_als_bilder(pfad):
 
 
 # ---------------------------------------------------------------------------
-# Weg 1: pypdfium2 + Apple Vision
+# Weg 1: pypdfium2 + RapidOCR (alle Systeme)
+# ---------------------------------------------------------------------------
+
+_rapid = []
+_rapid_sperre = threading.Lock()
+
+
+def _rapid_engine():
+    """RapidOCR einmal laden. Ohne log_level meldet es sich bei jedem Start
+    mit mehreren INFO-Zeilen im Protokoll."""
+    if not _rapid:
+        from rapidocr import RapidOCR
+        _rapid.append(RapidOCR(params={"Global.log_level": "warning"}))
+    return _rapid[0]
+
+
+def _zu_zeilen(kaesten, texte):
+    """Erkannte Textstuecke wieder zu Zeilen zusammensetzen.
+
+    RapidOCR liefert jedes Textstueck einzeln, mit seinem Rahmen. Bei einer
+    Rechnung stehen "Radwechsel Winter auf Sommer" und "69,00" in derselben
+    Zeile, kommen aber als zwei Stuecke - und landen untereinander, die
+    Zeilen der Tabelle zerfallen. Fuer die Suche (und vor allem fuer die
+    Nachsortierung, die den Text wie ein Mensch liest) ist "4 Radwechsel
+    Winter auf Sommer 69,00" verstaendlicher als vier Einzelzeilen.
+
+    Stuecke, deren Mitte um weniger als eine halbe Zeilenhoehe auseinander
+    liegt, gelten als eine Zeile; innerhalb der Zeile von links nach rechts.
+    """
+    stuecke = []
+    for kasten, text in zip(kaesten, texte):
+        ys = [p[1] for p in kasten]
+        xs = [p[0] for p in kasten]
+        stuecke.append(((min(ys) + max(ys)) / 2, max(ys) - min(ys), min(xs), text))
+    stuecke.sort(key=lambda s: (s[0], s[2]))
+    zeilen, aktuell = [], []
+    for st in stuecke:
+        if aktuell:
+            mitte = sum(s[0] for s in aktuell) / len(aktuell)
+            hoehe = max(1.0, sum(s[1] for s in aktuell) / len(aktuell))
+            if abs(st[0] - mitte) > hoehe / 2:
+                zeilen.append(aktuell)
+                aktuell = []
+        aktuell.append(st)
+    if aktuell:
+        zeilen.append(aktuell)
+    return "\n".join(" ".join(s[3] for s in sorted(z, key=lambda s: s[2])) for z in zeilen)
+
+
+def _ocr_mit_rapidocr(pfad):
+    import numpy as np
+
+    teile = []
+    for bild in _seiten_als_bilder(pfad):
+        feld = np.array(bild.convert("RGB"))
+        # Eine Erkennung zur Zeit: RapidOCR rechnet selbst schon auf allen
+        # Kernen, und es ist nicht zugesichert, dass dieselbe Instanz aus
+        # mehreren Lese-Threads gleichzeitig benutzt werden darf.
+        with _rapid_sperre:
+            ergebnis = _rapid_engine()(feld)
+        texte = list(getattr(ergebnis, "txts", None) or [])
+        kaesten = getattr(ergebnis, "boxes", None)
+        if texte:
+            if kaesten is not None and len(kaesten) == len(texte):
+                teile.append(_zu_zeilen(kaesten, texte))
+            else:
+                teile.append("\n".join(texte))
+    return "\n".join(teile)
+
+
+# ---------------------------------------------------------------------------
+# Weg 2: pypdfium2 + Apple Vision (nur Mac, Ausweichweg)
 # ---------------------------------------------------------------------------
 
 def _vision_text_aus_png(png_bytes, sprachen=("de-DE", "en-US")):
@@ -209,7 +306,7 @@ def _ocr_mit_vision(pfad):
 
 
 # ---------------------------------------------------------------------------
-# Weg 2: der alte Tesseract-Pfad (nur noch Notnagel)
+# Weg 3: der alte Tesseract-Pfad (nur noch Notnagel)
 # ---------------------------------------------------------------------------
 
 def _bild_fuer_tesseract_aufbereiten(bild):
@@ -251,6 +348,19 @@ def pdf_text_erkennen(pfad):
     """
     engine = verfuegbare_engine()
 
+    if engine == "rapidocr":
+        try:
+            return _ocr_mit_rapidocr(pfad)
+        except Exception as e:
+            print(f"[Warnung] Texterkennung (RapidOCR) fehlgeschlagen bei {os.path.basename(pfad)}: {e}")
+            # Zweite Chance ueber die Ausweichwege, falls vorhanden.
+            if _pruefe_vision():
+                engine = "vision"
+            elif _pruefe_tesseract():
+                engine = "tesseract"
+            else:
+                return ""
+
     if engine == "vision":
         try:
             return _ocr_mit_vision(pfad)
@@ -272,6 +382,6 @@ def pdf_text_erkennen(pfad):
 
     print(
         "[Hinweis] Keine Texterkennung verfuegbar - gescannte PDFs werden uebersprungen. "
-        "Abhilfe: pip install pypdfium2 pyobjc-framework-Vision"
+        "Abhilfe: pip install pypdfium2 rapidocr"
     )
     return ""

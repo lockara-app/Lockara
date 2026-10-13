@@ -65,3 +65,4 @@ such-diagnose*.txt
 
 # Uebergabe-Ordner fuer Git-Buendel (Claude-Sitzungen)
 _uebergabe/
+ocr-vergleich/

@@ -164,7 +164,7 @@ def _hilfe_tab(app, parent):
     ).pack(padx=4, pady=(0, 2), anchor="w")
 
     engine = ocr.verfuegbare_engine()
-    engine_namen = {"vision": "Apple Vision", "tesseract": "Tesseract"}
+    engine_namen = {"rapidocr": "RapidOCR", "vision": "Apple Vision", "tesseract": "Tesseract"}
     if engine:
         ocr_text = t("help.ocr_available", engine=engine_namen.get(engine, engine))
         ocr_farbe = "#2e7d32"

@@ -58,12 +58,19 @@ for datei in modell.AUSLIEFERN:
 from PyInstaller.utils.hooks import collect_dynamic_libs  # noqa: E402
 ort_bibliotheken = collect_dynamic_libs('onnxruntime')
 
+# Texterkennung RapidOCR (kern/ocr.py): bringt Modelle und Einstellungen
+# als Dateien im Paket mit (rapidocr/models, *.yaml) und laedt seine
+# Bausteine zur Laufzeit nach Namen - beides findet PyInstaller allein nicht.
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules  # noqa: E402
+rapidocr_dateien = collect_data_files('rapidocr')
+rapidocr_module = collect_submodules('rapidocr')
+
 a = Analysis(
     [str(ROOT / 'smartsearch' / '__main__.py')],
     pathex=[str(ROOT)],
     binaries=ort_bibliotheken,
     datas=[(str(ROOT / 'LICENSE.txt'), '.'),
-           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + modell_dateien,
+           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + modell_dateien + rapidocr_dateien,
     hiddenimports=[
         'onnxruntime',
         'tokenizers',
@@ -75,6 +82,7 @@ a = Analysis(
         'pptx',
         'watchdog',
         'pypdfium2',
+        'rapidocr', 'cv2', 'shapely', 'pyclipper', 'omegaconf',
         # Symbol im Infobereich - das Windows-Gegenstueck zur Menueleiste
         'pystray',
         'pystray._win32',
@@ -83,7 +91,7 @@ a = Analysis(
         # Texterkennung. Das Programm tesseract.exe muss zusaetzlich
         # installiert sein, das Paket allein reicht nicht.
         'pytesseract',
-    ],
+    ] + rapidocr_module,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
