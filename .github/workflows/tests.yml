@@ -53,6 +53,10 @@ jobs:
         if: hashFiles('tests/test_lizenz.py') != ''
         run: python -m tests.test_lizenz
 
+      - name: Begriffsliste-Test
+        if: hashFiles('tests/test_begriffe.py') != ''
+        run: python -m tests.test_begriffe
+
   suchqualitaet:
     name: Suchqualitaet (Linux)
     runs-on: ubuntu-latest
