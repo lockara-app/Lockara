@@ -24,6 +24,23 @@ def speichere_config(config):
         json.dump(config, f, indent=2)
 
 
+def automatische_updatepruefung():
+    """Ob SmartSearch beim Start nach einer neuen Fassung fragt.
+
+    Das ist die EINZIGE Verbindung, die das Programm von sich aus aufbaut
+    (kern/updates.py: eine Anfrage an api.github.com, uebertragen werden
+    nur IP-Adresse und Programmversion, nichts aus den Dateien). Kanzleien
+    und ihre IT wollen das abschalten koennen - in den Einstellungen oder
+    vorab per config.json: "update_pruefung": false. Ohne Eintrag: an."""
+    return lade_config().get("update_pruefung", True) is not False
+
+
+def setze_automatische_updatepruefung(an):
+    config = lade_config()
+    config["update_pruefung"] = bool(an)
+    speichere_config(config)
+
+
 def ueberwachte_ordner():
     """Aktuell in der config.json eingetragene Ordner, absolut."""
     return [

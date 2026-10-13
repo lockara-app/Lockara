@@ -194,6 +194,8 @@ TRANSLATIONS = {
         "settings.autostart_checkbox": "SmartSearch mit dem Mac starten",
         "settings.version_label": "Version {version}",
         "settings.check_updates_button": "Nach Updates suchen",
+        "settings.auto_update_checkbox": "Beim Start nach neuen Fassungen suchen",
+        "settings.auto_update_hint": "Fragt einmal bei GitHub nach der neuesten Versionsnummer. Übertragen werden nur IP-Adresse und Programmversion, nichts aus Ihren Dateien.",
         "settings.language_label": "Sprache",
 
         # Sicherung
@@ -251,7 +253,7 @@ TRANSLATIONS = {
         "privacy.section2_title": "Auch die Auswertung erfolgt lokal.",
         "privacy.section2_text": "Das Modell, das Ihre Suchanfragen auswertet, arbeitet vollständig offline auf diesem Mac. Es besteht keine Verbindung, über die Inhalte abfließen könnten.",
         "privacy.section3_title": "Die Suche braucht kein Internet.",
-        "privacy.section3_text": "Das Suchmodell ist Teil des Programms und wird nicht nachgeladen. SmartSearch baut für die Suche keine Verbindung ins Internet auf – auch nicht beim ersten Start.",
+        "privacy.section3_text": "Das Suchmodell ist Teil des Programms und wird nicht nachgeladen. SmartSearch baut für die Suche keine Verbindung ins Internet auf – auch nicht beim ersten Start. Einzige Verbindung: die Frage nach neuen Fassungen beim Start, ohne Inhalte, unter „Allgemein“ abschaltbar.",
         "privacy.section4_title": "Der Index bleibt in Ihrer Hand.",
         "privacy.section4_text": "Er liegt als gewöhnliche Datei in Ihrem Benutzerordner und lässt sich jederzeit einsehen oder löschen.",
         "privacy.closing": "SmartSearch sieht Ihre Dateien für Sie durch – und sonst niemand.",
@@ -447,6 +449,8 @@ TRANSLATIONS = {
         "settings.autostart_checkbox": "Start SmartSearch with the Mac",
         "settings.version_label": "Version {version}",
         "settings.check_updates_button": "Check for updates",
+        "settings.auto_update_checkbox": "Check for new versions at startup",
+        "settings.auto_update_hint": "Asks GitHub once for the latest version number. Only the IP address and program version are transmitted, nothing from your files.",
         "settings.language_label": "Language",
 
         # Backup
@@ -504,7 +508,7 @@ TRANSLATIONS = {
         "privacy.section2_title": "Analysis is local as well.",
         "privacy.section2_text": "The model that interprets your queries runs entirely offline on this Mac. There is no connection through which content could leave.",
         "privacy.section3_title": "Searching needs no internet.",
-        "privacy.section3_text": "The search model is part of the application and is never downloaded. SmartSearch does not connect to the internet to search – not even on first launch.",
+        "privacy.section3_text": "The search model is part of the application and is never downloaded. SmartSearch does not connect to the internet to search – not even on first launch. The only connection: checking for new versions at startup, without any content, can be turned off under “General”.",
         "privacy.section4_title": "The index remains yours.",
         "privacy.section4_text": "It is an ordinary file in your user folder and can be inspected or deleted at any time.",
         "privacy.closing": "SmartSearch looks through your files for you – and nobody else does.",
