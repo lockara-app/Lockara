@@ -14,6 +14,7 @@ import time
 
 from smartsearch.kern.pfade import INDEX_FILE
 from smartsearch.kern.index import gueltige_paare, index_mit_matrix, nur_gueltige_eintraege
+from smartsearch.kern import nachsortierung
 from smartsearch.kern.modell import geladenes_modell
 from smartsearch.kern.sprache import anfrage_woerter, wort_trifft
 
@@ -187,18 +188,19 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
         eintrag_liste = nach_datei.setdefault(e["datei"], [])
         eintrag_liste.append((i, e))
 
-    rohe_treffer = []
+    # Erste Stufe: jedes Dokument bewerten. Alle bleiben in dieser Liste,
+    # auch die, die nach den alten Regeln wegfallen - aus ihr waehlt die
+    # Nachsortierung ihre Kandidaten.
+    dokumente = []
     for pfad, abschnitte in nach_datei.items():
-        bester_abschnitt = None
-        bester_semantik = -1.0
+        werte_je_abschnitt = []
         for i, e in abschnitte:
             if alle_werte is not None:
                 wert = float(alle_werte[i])
             else:
                 wert = float(np.dot(anfrage_vektor, e["vektor"]))
-            if wert > bester_semantik:
-                bester_semantik = wert
-                bester_abschnitt = e
+            werte_je_abschnitt.append((wert, e))
+        bester_semantik, bester_abschnitt = max(werte_je_abschnitt, key=lambda x: x[0])
 
         dateiname = os.path.basename(pfad).lower()
         gesamttext = " ".join(e.get("text", "") for _, e in abschnitte).lower()
@@ -238,11 +240,16 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
 
         # Kein einziges Suchwort im gesamten Dokument und semantisch nur
         # mittelmaessig - dann lieber nichts anzeigen als etwas Falsches.
-        if such_woerter and gefundene_woerter == 0 and bester_semantik < SEMANTIK_MINDEST_OHNE_TREFFER:
-            continue
+        verworfen = bool(
+            (such_woerter and gefundene_woerter == 0
+             and bester_semantik < SEMANTIK_MINDEST_OHNE_TREFFER)
+            or gesamt_score <= SCORE_SCHWELLE)
 
-        if gesamt_score > SCORE_SCHWELLE:
-            rohe_treffer.append((gesamt_score, bester_semantik, pfad, bester_abschnitt))
+        dokumente.append({
+            "gesamt": gesamt_score, "semantik": bester_semantik, "pfad": pfad,
+            "abschnitt": bester_abschnitt, "abschnitte": werte_je_abschnitt,
+            "verworfen": verworfen,
+        })
 
     # Bei gleichem Gesamtwert entscheidet die rohe Aehnlichkeit, danach der
     # Pfad. Gleichstand ist haeufig: semantik_norm wird bei der OBERGRENZE
@@ -250,8 +257,18 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
     # Ohne diese Regel entschied die zufaellige Reihenfolge, in der die
     # Dateien eingelesen wurden - dieselbe Suche lieferte bei jedem
     # Indexlauf eine andere Reihenfolge (gemessen 28.09.2026).
-    rohe_treffer.sort(key=lambda x: (-x[0], -x[1], x[2]))
-    rohe_treffer = [(gesamt, abschnitt) for gesamt, _, _, abschnitt in rohe_treffer]
+    dokumente.sort(key=lambda d: (-d["gesamt"], -d["semantik"], d["pfad"]))
+
+    # Zweite Stufe, wenn das Modell dabei ist (kern/nachsortierung.py).
+    nachsortierer = nachsortierung.geladener_nachsortierer()
+    if nachsortierer is not None:
+        try:
+            return _nachsortieren(anfrage, dokumente, nachsortierer)[:top_n]
+        except Exception as e:
+            # Lieber das Ergebnis der ersten Stufe zeigen als gar keins.
+            print(f"[Nachsortierung] fehlgeschlagen, zeige erste Stufe: {e}")
+
+    rohe_treffer = [(d["gesamt"], d["abschnitt"]) for d in dokumente if not d["verworfen"]]
 
     # Abstand zum besten Treffer auswerten - siehe RELATIVER_ABSTAND.
     if rohe_treffer:
@@ -259,6 +276,66 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None):
         rohe_treffer = [p for p in rohe_treffer if p[0] >= mindestwert]
 
     return rohe_treffer[:top_n]
+
+
+# Fuer werkzeuge/such_diagnose.py: was die Nachsortierung bei der letzten
+# Suche je Dokument errechnet hat (Pfad -> Wahrscheinlichkeit).
+LETZTE_NACHSORTIERUNG = {}
+
+
+def _nachsortieren(anfrage, dokumente, nachsortierer):
+    """Die besten Kandidaten der ersten Stufe vom Nachsortierer lesen
+    lassen, beide Reihenfolgen zusammenfuehren und nur behalten, was er
+    fuer passend haelt. Einstellungen und Messung: kern/nachsortierung.py."""
+    ns = nachsortierung
+    kandidaten = dokumente[:ns.KANDIDATEN]
+
+    texte, besitzer = [], []
+    for nummer, d in enumerate(kandidaten):
+        beste = sorted(d["abschnitte"], key=lambda x: -x[0])[:ns.ABSCHNITTE_JE_DOKUMENT]
+        for _, e in beste:
+            texte.append(e.get("text", ""))
+            besitzer.append((nummer, e))
+
+    werte = nachsortierer.wahrscheinlichkeiten(anfrage, texte)
+
+    bewertung = {}   # Kandidat -> (Wahrscheinlichkeit, bester Abschnitt)
+    for (nummer, e), p in zip(besitzer, werte):
+        if nummer not in bewertung or p > bewertung[nummer][0]:
+            bewertung[nummer] = (p, e)
+
+    LETZTE_NACHSORTIERUNG.clear()
+    for nummer, (p, _) in bewertung.items():
+        LETZTE_NACHSORTIERUNG[kandidaten[nummer]["pfad"]] = p
+
+    if not bewertung:
+        return []
+    hoechste = max(p for p, _ in bewertung.values())
+    # Nichts im Bestand beantwortet die Anfrage.
+    if hoechste < ns.MINDEST_WAHRSCHEINLICHKEIT:
+        return []
+
+    nach_nachsortierer = sorted(bewertung, key=lambda n: (-bewertung[n][0], n))
+    rang_ns = {n: r for r, n in enumerate(nach_nachsortierer)}
+
+    ergebnis = []
+    for nummer, (p, abschnitt) in bewertung.items():
+        if p < max(hoechste * ns.RELATIVER_ABSTAND, ns.MINDEST_WAHRSCHEINLICHKEIT / 2):
+            continue
+        # Reciprocal Rank Fusion. nummer ist zugleich der Rang in der
+        # ersten Stufe, weil die Kandidaten schon danach sortiert sind.
+        wert = (1.0 / (ns.RRF_K + rang_ns[nummer])
+                + ns.GEWICHT_ERSTE_STUFE / (ns.RRF_K + nummer))
+        # Angezeigt wird der Abschnitt, den der Nachsortierer am besten
+        # fand - er zeigt meist genau die Stelle, die die Anfrage beantwortet.
+        ergebnis.append((wert, p, kandidaten[nummer]["pfad"], abschnitt))
+
+    ergebnis.sort(key=lambda x: (-x[0], -x[1], x[2]))
+    if not ergebnis:
+        return []
+    # Fuer die Anzeige auf 0..1 bezogen, der beste Treffer hat 1.
+    oben = ergebnis[0][0]
+    return [(wert / oben, abschnitt) for wert, _, _, abschnitt in ergebnis]
 
 
 def aehnliche_dateien(pfad, top_n=10):

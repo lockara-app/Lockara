@@ -22,7 +22,7 @@ py -3.13 -m venv venv
 venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-Danach einmal das Suchmodell holen. Es liegt nicht im Repository; geladen werden rund 415 MB, daraus entsteht die 100 MB große Fassung, die in die App kommt:
+Danach einmal die beiden Modelle holen: das Suchmodell und den Nachsortierer. Sie liegen nicht im Repository; geladen werden rund 2,7 GB, daraus entstehen die verkleinerten Fassungen, die in die App kommen (zusammen rund 740 MB):
 
 ```
 venv/bin/python -m werkzeuge.modell_holen
@@ -57,6 +57,7 @@ smartsearch/              das Programm
 │   ├── index.py            index.pkl lesen/schreiben/aufräumen
 │   ├── indexierung.py      Dateien einlesen, kompletter Indexlauf
 │   ├── modell.py           Suchmodell (ONNX) laden
+│   ├── nachsortierung.py   zweite Stufe: beste Kandidaten genauer prüfen
 │   ├── dateien.py          Dateien finden, Text auslesen
 │   ├── ocr.py              Texterkennung für Scans
 │   ├── einstellungen.py    config.json, Favoriten, Suchverlauf

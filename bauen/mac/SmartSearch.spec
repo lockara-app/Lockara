@@ -42,6 +42,19 @@ for datei in modell.AUSLIEFERN:
     ziel = pathlib.Path('ressourcen') / modell.MODELL_ORDNER / datei
     modell_dateien.append((str(quelle), str(ziel.parent)))
 
+# Der Nachsortierer (kern/nachsortierung.py) kommt genauso mit. Er ist
+# Pflicht: ohne ihn liefe die App zwar, saehe aber deutlich schlechter aus
+# (siehe Messung dort) - das soll beim Bauen auffallen, nicht beim Kunden.
+from smartsearch.kern import nachsortierung  # noqa: E402
+if not nachsortierung.ist_vorhanden():
+    raise SystemExit("Nachsortierer fehlt - zuerst: venv/bin/python -m werkzeuge.modell_holen")
+for datei in nachsortierung.AUSLIEFERN:
+    quelle = pathlib.Path(nachsortierung.modell_pfad(datei))
+    if not quelle.is_file():
+        raise SystemExit(f"Nachsortierer unvollstaendig, es fehlt: {quelle}")
+    ziel = pathlib.Path('ressourcen') / nachsortierung.MODELL_ORDNER / datei
+    modell_dateien.append((str(quelle), str(ziel.parent)))
+
 # onnxruntime bringt eigene Bibliotheken mit, die PyInstaller nur ueber
 # collect_dynamic_libs sicher findet.
 from PyInstaller.utils.hooks import collect_dynamic_libs  # noqa: E402

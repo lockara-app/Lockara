@@ -27,7 +27,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from smartsearch import plattform, version
-from smartsearch.kern import (einstellungen, einzelinstanz, index, indexierung,
+from smartsearch.kern import (einstellungen, einzelinstanz, index, indexierung, nachsortierung,
                               modell, ocr, sprache, suche, updates)
 from smartsearch.kern import ordner as ordner_verwaltung
 from smartsearch.kern import rueckmeldung
@@ -655,6 +655,9 @@ class Hauptfenster(ctk.CTk):
             try:
                 if modell.modell_ist_vorhanden():
                     modell.geladenes_modell()
+                # Der Nachsortierer braucht beim ersten Laden ein paar
+                # Sekunden - lieber jetzt als bei der ersten Suche.
+                nachsortierung.geladener_nachsortierer()
             except Exception as e:
                 print(f"[Start] Modell-Vorladen uebersprungen: {e}")
 
