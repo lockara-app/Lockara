@@ -68,3 +68,4 @@ _uebergabe/
 # Lizenzdateien von Kunden und private Schluessel nie versionieren
 *.smartsearch-lizenz
 privat.key
+ocr-vergleich/

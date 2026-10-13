@@ -1,0 +1,38 @@
+Texterkennung im Vergleich - 13.10.2026
+werkzeuge/ocr_vergleich.py, die neun Scans aus tests/testdokumente,
+verglichen mit dem Text, aus dem die Scans erzeugt wurden.
+
+Woerter = Anteil der Woerter (ab 3 Buchstaben) des Originals, die im
+erkannten Text vorkommen. Zeichen = Aehnlichkeit Zeichen fuer Zeichen,
+streng (auch Zeilenfolge zaehlt).
+
+Mac (MacBook Air, Apple-Chip)
+  RapidOCR   Woerter  99.4%  Zeichen 0.982  zusammen  23.6 s  (davon ~10 s einmaliges Laden)
+  Vision     Woerter  99.7%  Zeichen 0.925  zusammen   8.3 s
+
+Cloud (Linux, 2 Kerne)
+  RapidOCR   Woerter  99.4%  Zeichen 0.982  zusammen  40.0 s
+  Tesseract  Woerter  86.0%  Zeichen 0.962  zusammen  59.3 s
+
+Je Scan (Mac)
+  Scan_20240131_0001.pdf     RapidOCR 100.0%  Vision 100.0%
+  IMG_5102.pdf               RapidOCR  98.6%  Vision  98.6%
+  Scan_20240712_0002.pdf     RapidOCR 100.0%  Vision 100.0%
+  Scan_20240415_0001.pdf     RapidOCR 100.0%  Vision  98.6%
+  Gutachten_Scan.pdf         RapidOCR  97.0%  Vision 100.0%
+  Scan_0042.pdf              RapidOCR 100.0%  Vision 100.0%
+  Scan_Urteil_AG.pdf         RapidOCR 100.0%  Vision 100.0%
+  Scan_20240610_0001.pdf     RapidOCR 100.0%  Vision 100.0%
+  Scan_20240506_0007.pdf     RapidOCR  99.1%  Vision 100.0%
+
+Bewertung
+- RapidOCR erkennt so gut wie Vision und deutlich besser als Tesseract.
+  Damit liefern Mac und Windows denselben Text und denselben Index.
+- Vision ist auf dem Mac rund dreimal so schnell (0,9 s gegen 1,4 s je
+  Seite nach dem Laden). Bei einem Indexlauf faellt das nur bei sehr
+  vielen Scans ins Gewicht.
+- Suchqualitaet (such_diagnose, Cloud): ohne Nachsortierer 46-48 von 67
+  mit beiden Erkennungen, mit Nachsortierer 57 von 69 (Tesseract: 59).
+  Die verbleibenden Scan-Fehler liegen an der Rangfolge, nicht am Text.
+- Die Test-Scans sind sauber erzeugt. Vor der Auslieferung an echten
+  Scans pruefen: venv/bin/python -m werkzeuge.ocr_vergleich ~/Ordner

@@ -41,7 +41,7 @@ SmartSearch stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. D
 | Einstellungen, Favoriten, Verlauf, Updates | Paket: `.app`/DMG bzw. `.exe`/MSI (`bauen/`) |
 | Versionsnummer (`version.py`) | Signieren: Apple-Konto bzw. Windows-Zertifikat |
 
-**Noch nicht gleich:** Die Texterkennung (`kern/ocr.py`) nutzt auf dem Mac Apple Vision und unter Windows Tesseract. Damit entstehen für denselben Scan unterschiedliche Indizes. Geplant ist RapidOCR auf beiden Systemen.
+**Texterkennung:** `kern/ocr.py` nutzt auf allen Systemen RapidOCR, damit derselbe Scan überall denselben Text und denselben Index ergibt. Apple Vision (Mac) und Tesseract (Windows) bleiben nur als Ausweichweg, falls RapidOCR fehlt.
 
 ## Regeln für neue Funktionen
 

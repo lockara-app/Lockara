@@ -38,6 +38,7 @@ def selbsttest():
         "openpyxl": "Excel",
         "pptx": "PowerPoint",
         "pypdfium2": "Seiten fuer Texterkennung",
+        "rapidocr": "Texterkennung (RapidOCR)",
         "Vision": "Texterkennung",
         "watchdog": "Automatische Aktualisierung",
         "cryptography": "Lizenzpruefung",

@@ -60,14 +60,15 @@ python-pptx
 watchdog
 
 # --- Texterkennung fuer gescannte PDFs ---
-# pypdfium2 rendert die Seiten - auf beiden Systemen.
-# Erkannt wird auf dem Mac ueber Apples Vision (siehe oben), unter Windows
-# ueber Tesseract. Das braucht ZUSAETZLICH das Programm selbst:
-#     https://github.com/UB-Mannheim/tesseract/wiki
-# Ohne Tesseract laeuft alles andere normal weiter, nur gescannte PDFs
-# ohne Textebene bleiben dann unlesbar. Geplant ist RapidOCR auf beiden
-# Systemen (siehe Aufgabenliste), dann faellt dieser Unterschied weg.
+# pypdfium2 rendert die Seiten, RapidOCR erkennt den Text - auf ALLEN
+# Systemen gleich, damit derselbe Scan ueberall denselben Index ergibt
+# (siehe kern/ocr.py, dort auch die Messung gegen Tesseract). RapidOCR
+# bringt seine Modelle im Paket mit und rechnet ueber onnxruntime.
+# Es zieht opencv-python-headless (rund 70 MB) mit.
+# Als Ausweichweg bleiben Apples Vision (Mac, siehe oben) und Tesseract
+# (Windows, braucht zusaetzlich das Programm tesseract.exe).
 pypdfium2
+rapidocr==3.10.0
 pytesseract ; sys_platform == "win32"
 
 # --- Bauen ---
