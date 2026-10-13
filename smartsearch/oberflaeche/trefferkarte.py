@@ -13,7 +13,7 @@ import os
 import customtkinter as ctk
 
 from smartsearch.kern.sprache import ausschnitt_mit_fundstellen
-from smartsearch.oberflaeche import farben
+from smartsearch.oberflaeche import farben, rollen
 from smartsearch.oberflaeche.i18n import t
 
 
@@ -103,8 +103,7 @@ def karte_zeichnen(app, eltern, score, eintrag, such_woerter):
             txt_ausschnitt.yview_moveto(0)
             inneres = txt_ausschnitt._textbox
             inneres.configure(takefocus=False, cursor="arrow")
-            for ereignis in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
-                inneres.bind(ereignis, app._rollen_weiterreichen)
+            rollen.binden(inneres, app._rollen_weiterreichen)
         except Exception:
             pass
     else:

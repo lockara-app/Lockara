@@ -39,6 +39,7 @@ Immer im Projektordner:
 | Programm | `venv/bin/python -m smartsearch` | `venv\Scripts\python -m smartsearch` |
 | Wortformen-Test (1 Sekunde) | `venv/bin/python -m tests.test_wortformen` | `venv\Scripts\python -m tests.test_wortformen` |
 | Begriffsliste-Test (1 Sekunde) | `venv/bin/python -m tests.test_begriffe` | `venv\Scripts\python -m tests.test_begriffe` |
+| Rolltest (1 Sekunde) | `venv/bin/python -m tests.test_rollen` | `venv\Scripts\python -m tests.test_rollen` |
 | Suchqualität messen | `venv/bin/python -m werkzeuge.such_diagnose --testdokumente` | `venv\Scripts\python -m werkzeuge.such_diagnose --testdokumente` |
 | Testdokumente neu erzeugen | `venv/bin/python -m werkzeuge.testdokumente` | `venv\Scripts\python -m werkzeuge.testdokumente` |
 | Index untersuchen | `venv/bin/python -m werkzeuge.diagnose` | `venv\Scripts\python -m werkzeuge.diagnose` |

@@ -57,6 +57,9 @@ jobs:
         if: hashFiles('tests/test_begriffe.py') != ''
         run: python -m tests.test_begriffe
 
+      - name: Rolltest
+        run: python -m tests.test_rollen
+
   suchqualitaet:
     name: Suchqualitaet (Linux)
     runs-on: ubuntu-latest

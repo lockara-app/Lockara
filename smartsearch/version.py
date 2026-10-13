@@ -8,4 +8,4 @@ herausgelesen; bis Fassung 1.0.2 stand im Info.plist deshalb durchgehend
 "1.0.1", weil sie an einer zweiten Stelle gepflegt wurde.
 """
 
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.8"

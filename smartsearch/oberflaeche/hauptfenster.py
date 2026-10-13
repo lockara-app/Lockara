@@ -33,7 +33,7 @@ from smartsearch.kern import ordner as ordner_verwaltung
 from smartsearch.kern import rueckmeldung
 from smartsearch.kern.pfade import INDEX_FILE
 from smartsearch.kern.ueberwachung import Ordnerwaechter
-from smartsearch.oberflaeche import farben, i18n, trefferkarte, verlaufsliste
+from smartsearch.oberflaeche import farben, i18n, rollen, trefferkarte, verlaufsliste
 from smartsearch.oberflaeche.dialoge import einfuehrung, fehlerliste, meldungen
 from smartsearch.oberflaeche.dialoge import einstellungen as einstellungen_dialog
 from smartsearch.oberflaeche.dialoge import ordner as ordner_dialog
@@ -613,18 +613,20 @@ class Hauptfenster(ctk.CTk):
         dass sich mehrere bind_all()-Aufrufe gegenseitig überschreiben.
         """
         scrollbare_bereiche = (self.cards_scrollframe,)
+        rollen.einrichten(self.cards_scrollframe._parent_canvas)
 
-        def _on_mousewheel(event):
-            if not event.delta:
-                return
+        def _beim_rollen(event, art):
             widget = event.widget
             while widget is not None:
                 if widget in scrollbare_bereiche:
-                    widget._parent_canvas.yview_scroll(int(-1 * event.delta), "units")
-                    return
+                    rollen.rollen(widget._parent_canvas,
+                                  rollen.pixel_aus_ereignis(event, art))
+                    return "break"
                 widget = getattr(widget, "master", None)
 
-        self.bind_all("<MouseWheel>", _on_mousewheel)
+        # Mausrad, Linux-Knoepfe 4/5 und - ab Tk 9 - das Trackpad, das
+        # sich dort als eigenes Ereignis meldet. Siehe oberflaeche/rollen.py.
+        rollen.binden(self, _beim_rollen, alle=True)
 
     # ---------- FENSTER / SIGNAL-POLLING ----------
 
@@ -1132,18 +1134,13 @@ class Hauptfenster(ctk.CTk):
         self.aktuelle_treffer = fav_treffer
         self.zeige_aktuelle_ergebnisse()
 
-    def _rollen_weiterreichen(self, ereignis):
+    def _rollen_weiterreichen(self, ereignis, art="rad"):
         """Gibt ein Mausrad-Ereignis an die Trefferliste weiter, statt es im
         Textfeld zu verarbeiten. Ohne das rollt der Ausschnitt in sich
         selbst und die Liste bleibt stehen - oder springt."""
         try:
-            ziel = self.cards_scrollframe._parent_canvas
-            if ereignis.num == 4:
-                ziel.yview_scroll(-2, "units")
-            elif ereignis.num == 5:
-                ziel.yview_scroll(2, "units")
-            else:
-                ziel.yview_scroll(int(-1 * (ereignis.delta / 2)), "units")
+            rollen.rollen(self.cards_scrollframe._parent_canvas,
+                          rollen.pixel_aus_ereignis(ereignis, art))
         except Exception:
             pass
         return "break"
