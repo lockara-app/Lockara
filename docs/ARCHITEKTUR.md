@@ -35,7 +35,7 @@ SmartSearch stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. D
 | Gleich auf beiden Systemen | Verschieden (nur in `plattform/` und `bauen/`) |
 |---|---|
 | Suche, Bewertung, Wortformen (`kern/suche.py`, `kern/sprache.py`) | Datei öffnen, im Finder/Explorer zeigen, Vorschau |
-| Suchmodell, Indexformat (`kern/modell.py`, `kern/index.py`) | Benachrichtigung, Autostart, Systemsprache |
+| Suchmodell, Nachsortierer, Indexformat (`kern/modell.py`, `kern/nachsortierung.py`, `kern/index.py`) | Benachrichtigung, Autostart, Systemsprache |
 | Dateien lesen (`kern/dateien.py`) | Symbol in Menüleiste bzw. Infobereich, Tastenkürzel, Dock/Taskleiste |
 | Oberfläche, Texte, Farben (`oberflaeche/`) | Datenordner (`~/Library/Application Support` bzw. `%LOCALAPPDATA%`, in `kern/pfade.py`) |
 | Einstellungen, Favoriten, Verlauf, Updates | Paket: `.app`/DMG bzw. `.exe`/MSI (`bauen/`) |

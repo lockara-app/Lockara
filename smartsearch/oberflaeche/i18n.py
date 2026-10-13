@@ -164,6 +164,7 @@ TRANSLATIONS = {
 
         # Suche
         "search.status_searching": "Suche läuft",
+        "search.status_refining": "Treffer werden geprüft …",
         "search.status_error": "Die Suche ist fehlgeschlagen: {fehler}",
         "search.status_no_index": "Kein Index vorhanden. Aktualisieren Sie zunächst den Index.",
         "search.status_no_results": "Keine Treffer",
@@ -171,7 +172,7 @@ TRANSLATIONS = {
         "results.none_no_folder": "Es wurde noch kein Ordner hinzugefügt.\n\nWählen Sie links »Ordner hinzufügen«, um festzulegen, was durchsucht werden soll.",
         "results.none_filtered": "Keine Treffer für »{anfrage}« mit den gesetzten Filtern.\n\nMöglicherweise ist der Dateityp des gesuchten Dokuments oben abgewählt.",
         "results.none_never_indexed": "Es wurde noch nicht indexiert.\n\nWählen Sie links »Index aktualisieren«, um die Ordner einzulesen.",
-        "results.none_generic": "Keine Treffer für »{anfrage}«.\n\nMögliche Ursachen: Die Datei liegt in keinem der überwachten Ordner, sie wurde noch nicht indexiert, oder ihr Format wird nicht unterstützt.",
+        "results.none_generic": "Keine Treffer für »{anfrage}«.\n\nIn den überwachten Ordnern passt kein Dokument zu dieser Anfrage.\nLiegt das gesuchte Dokument woanders, fügen Sie den Ordner links hinzu.",
 
         # Ordnerverwaltung
         "folders.dialog_title": "Durchsuchte Ordner",
@@ -434,6 +435,7 @@ TRANSLATIONS = {
 
         # Search
         "search.status_searching": "Searching",
+        "search.status_refining": "Checking results …",
         "search.status_error": "The search failed: {fehler}",
         "search.status_no_index": "No index available. Update the index first.",
         "search.status_no_results": "No results",
@@ -441,7 +443,7 @@ TRANSLATIONS = {
         "results.none_no_folder": "No folder has been added yet.\n\nChoose “Add folder” on the left to define what should be searched.",
         "results.none_filtered": "No results for “{anfrage}” with the current filters.\n\nThe file type you are looking for may be deselected above.",
         "results.none_never_indexed": "Nothing has been indexed yet.\n\nChoose “Update index” on the left to read in your folders.",
-        "results.none_generic": "No results for “{anfrage}”.\n\nPossible reasons: the file is not in any of the monitored folders, it has not been indexed yet, or its format is not supported.",
+        "results.none_generic": "No results for “{anfrage}”.\n\nNo document in the monitored folders matches this query.\nIf the document is stored elsewhere, add its folder on the left.",
 
         # Folder management
         "folders.dialog_title": "Searched folders",

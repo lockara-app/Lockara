@@ -5,7 +5,8 @@ aufraeumen und fuer die Suche im Arbeitsspeicher bereithalten.
 
 Ein Eintrag ist ein Textabschnitt einer Datei:
     {"datei": Pfad, "text": Abschnitt, "vektor": Zahlenfolge,
-     "geaendert": Zeitstempel, "ohne_inhalt": True nur bei unlesbaren Dateien}
+     "geaendert": Zeitstempel, "ohne_inhalt": True nur bei unlesbaren Dateien,
+     "leser": Stand der Leseroutine (dateien.LESER_STAND), fehlt bei alten Eintraegen}
 """
 
 import json

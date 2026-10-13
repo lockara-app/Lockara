@@ -1,0 +1,54 @@
+Rechenzeit des Nachsortierers auf Marcels MacBook Air (Apple-Chip, 10 Kerne), 10.10.2026
+Je Suche 16 Abschnitte zu je rund 100 Token.
+bge = BAAI/bge-reranker-v2-m3, gte = Alibaba-NLP/gte-multilingual-reranker-base
+
+Python 3.13.15 | onnxruntime 1.23.2 | arm64 | Provider: ['CoreMLExecutionProvider', 'AzureExecutionProvider', 'CPUExecutionProvider']
+Kerne: 10
+bge int8, CPU (wie jetzt)                     laden   0.4 s   je Suche (16 Abschnitte)    5143 ms   erster Wert -11.041
+bge int8, CPU, 4 Threads                      laden   0.3 s   je Suche (16 Abschnitte)    5392 ms   erster Wert -11.041
+bge voll (float32), CPU                       laden   2.4 s   je Suche (16 Abschnitte)    5357 ms   erster Wert -11.041
+bge voll (float32), CoreML                    laden   0.6 s   je Suche (16 Abschnitte)    7334 ms   erster Wert -11.041
+gte int8, CPU                                 laden   0.1 s   je Suche (16 Abschnitte)    2609 ms   erster Wert -3.194
+gte int8, CPU, 4 Threads                      laden   0.2 s   je Suche (16 Abschnitte)    2533 ms   erster Wert -3.194
+gte voll (float32), CPU                       laden   1.1 s   je Suche (16 Abschnitte)    2317 ms   erster Wert -3.187
+gte voll (float32), CoreML                    laden  10.7 s   je Suche (16 Abschnitte)     860 ms   erster Wert -3.187
+
+Token je Paar: [98, 92, 106, 109, 115, 118, 112, 94, 115, 96, 112, 95, 98, 92, 106, 109]
+bge int8 (jetzt), Stapel 8                         je Suche    4863 ms   Werte [-10.92 -10.88 -10.7 ]
+bge int8 (jetzt), Stapel 16                        je Suche    4781 ms   Werte [-10.92 -10.88 -10.7 ]
+bge int8 (jetzt), Stapel 1                         je Suche    7768 ms   Werte [-10.92 -10.88 -10.7 ]
+Groesse 1363 MB
+bge dynamisch int8, Stapel 8                       je Suche    3570 ms   Werte [-10.95 -10.9  -10.88]
+bge dynamisch int8, Stapel 1                       je Suche    3073 ms   Werte [-10.96 -10.85 -10.77]
+
+Token je Paar: [98, 92, 106, 109, 115, 118, 112, 94, 115, 96, 112, 95, 98, 92, 106, 109]
+bge fp16 CoreML MLProgram ALL ORT_DISABLE_ALL      je Suche    6023 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram ALL ORT_DISABLE_ALL Stapel1 je Suche   11864 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram CPUAndGPU ORT_DISABLE_ALL je Suche   13045 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram CPUAndGPU ORT_DISABLE_ALL Stapel1 je Suche   13945 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML NeuralNetwork ALL ORT_DISABLE_ALL  je Suche    8768 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork ALL ORT_DISABLE_ALL Stapel1 je Suche    9194 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork CPUAndGPU ORT_DISABLE_ALL je Suche    8349 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork CPUAndGPU ORT_DISABLE_ALL Stapel1 je Suche   10161 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML MLProgram ALL ORT_ENABLE_BASIC     je Suche   10593 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram ALL ORT_ENABLE_BASIC Stapel1 je Suche   14351 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram CPUAndGPU ORT_ENABLE_BASIC je Suche   10269 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML MLProgram CPUAndGPU ORT_ENABLE_BASIC Stapel1 je Suche   15117 ms   Werte [-10.92 -10.88 -10.69]
+bge fp16 CoreML NeuralNetwork ALL ORT_ENABLE_BASIC je Suche    9956 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork ALL ORT_ENABLE_BASIC Stapel1 je Suche   10729 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork CPUAndGPU ORT_ENABLE_BASIC je Suche    9952 ms   Werte [-10.92 -10.88 -10.68]
+bge fp16 CoreML NeuralNetwork CPUAndGPU ORT_ENABLE_BASIC Stapel1 je Suche   10259 ms   Werte [-10.92 -10.88 -10.68]
+
+Ergebnis
+--------
+- bge braucht auf dem Mac rund 0,3 s je Abschnitt. Weder CoreML (Grafikchip,
+  Neural Engine) noch volle Genauigkeit noch weniger Threads helfen.
+- Dynamische 8-Bit-Rechnung: rund 35 % schneller, aber 1,36 GB statt 637 MB.
+- gte ist etwa doppelt so schnell (mit CoreML rund 6x), sortiert aber
+  deutlich schlechter: 53 statt 58 von 69, und Negativtests lassen sich
+  nicht abgrenzen (Wahrscheinlichkeiten fuer "nichts passt" 0,32-0,41).
+- Entscheidung: bge bleibt, 6 statt 8 Kandidaten (12 Abschnitte), die
+  Oberflaeche zeigt die erste Stufe sofort und verfeinert danach.
+- Mit 6 Kandidaten in der Suchdiagnose gemessen: 58 von 69, 13 Fehlgriffe,
+  rund 6 s je Suche (die Diagnose-Zeit enthaelt mehr als nur den
+  Nachsortierer; Schwankung durch andere laufende Programme moeglich).

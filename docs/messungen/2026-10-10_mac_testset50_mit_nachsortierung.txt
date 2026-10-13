@@ -1,0 +1,242 @@
+==============================================================================
+SUCHDIAGNOSE
+==============================================================================
+Modell    : ibm-granite/granite-embedding-97m-multilingual-r2
+Datei     : onnx/model_smartsearch_int8.onnx
+Texterk.  : vision
+Lade Suchmodell (ibm-granite/granite-embedding-97m-multilingual-r2, onnx/model_smartsearch_int8.onnx)...
+Laden     : 0.5 s
+Testmodus : frischer Index aus <Projektordner>/tests/testdokumente
+            (eigener Datenordner, der echte Index bleibt unberuehrt)
+Indexieren: 14.4 s
+Indexdatei: <temp>/index.pkl
+
+Geltende Werte (kern/suche.py):
+  SCORE_SCHWELLE 0.15 · SEMANTIK_MINDEST_OHNE_TREFFER 0.75 · SEMANTIK 0.72–0.87
+  GEWICHT 0.65/0.35 · RELATIVER_ABSTAND 0.75
+Nachsortierung (kern/nachsortierung.py): BAAI/bge-reranker-v2-m3
+  KANDIDATEN 6 x 2 Abschnitte · MINDEST 0.002 · RELATIVER_ABSTAND 0.3 · RRF_K 10
+
+Dokumente im Index: 50   Textabschnitte: 214
+
+Lade Nachsortierer (BAAI/bge-reranker-v2-m3)...
+ok [alltag] 'Vertrag'  ->  2 Treffer
+ok [alltag] 'Verträge'  ->  2 Treffer
+XX [alltag] 'Auto'  ->  3 Treffer, 1 Fehlgriff(e)
+      Scan_20240415_0001.pdf erst auf Platz 2, davor Gutachten_Scan.pdf
+      Suchwoerter: ['auto']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Gutachten_Scan.pdf                  0.821  0.670  1/1    0.786  0.0388  ANGEZEIGT
+      * Scan_20240415_0001.pdf              0.832  0.746  1/1    0.835  0.0174  ANGEZEIGT
+        manual_EN.pdf                       0.774  0.358  1/1    0.582  0.0216  ANGEZEIGT
+        Mappe1.xlsx                         0.815  0.636  1/1    0.764  0.0078  raus: Nachsortierung
+        Berufungsbegruendung.pdf            0.765  0.302  1/1    0.546  0.0035  raus: Nachsortierung
+        Schreiben_0412.pdf                  0.760  0.265  1/1    0.523  0.0001  raus: Nachsortierung
+      * dok_2024_02_18.pdf                  0.805  0.565  0/1    0.367       -  raus: kein Kandidat
+      * Neues_Dokument_7.pdf                0.800  0.535  0/1    0.348       -  raus: kein Kandidat
+
+ok [alltag] 'Fahrzeug'  ->  4 Treffer
+ok [alltag] 'Versicherung fürs Auto'  ->  2 Treffer
+ok [alltag] 'Unterlagen rund ums Fahrzeug'  ->  5 Treffer
+ok [alltag] 'Was zahle ich jeden Monat?'  ->  1 Treffer
+XX [alltag] 'Drucker'  ->  2 Treffer
+      0027_2607_001.pdf erst auf Platz 2, davor Zeugnis_final.docx
+      Suchwoerter: ['drucker']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Zeugnis_final.docx                  0.831  0.742  0/1    0.483  0.0168  ANGEZEIGT
+      * 0027_2607_001.pdf                   0.788  0.453  0/1    0.294  0.0319  ANGEZEIGT
+        IMG_4471.pdf                        0.778  0.387  0/1    0.251  0.0017  raus: Nachsortierung
+        Satzung_Entwurf.pdf                 0.776  0.376  0/1    0.245  0.0005  raus: Nachsortierung
+        manual_EN.pdf                       0.822  0.680  0/1    0.442  0.0003  raus: Nachsortierung
+        notizen.txt                         0.779  0.392  0/1    0.255  0.0000  raus: Nachsortierung
+
+ok [alltag] 'Heizung gewartet'  ->  1 Treffer
+XX [alltag] 'Spende für die Steuererklärung'  ->  2 Treffer
+      CCF_000141.pdf erst auf Platz 2, davor Scan_20240712_0002.pdf
+      Suchwoerter: ['spende', 'steuererklärung']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Scan_20240712_0002.pdf              0.846  0.837  0/2    0.544  0.0070  ANGEZEIGT
+      * CCF_000141.pdf                      0.853  0.887  0/2    0.577  0.0060  ANGEZEIGT
+        Kostenrechnung_2024-0391.pdf        0.844  0.830  0/2    0.539  0.0006  raus: Nachsortierung
+        Schreiben_0412.pdf                  0.835  0.768  0/2    0.499  0.0003  raus: Nachsortierung
+        Mappe1.xlsx                         0.810  0.600  0/2    0.390  0.0000  raus: Nachsortierung
+        Präsentation1.pptx                  0.828  0.723  0/2    0.470  0.0000  raus: Nachsortierung
+
+ok [alltag] 'Waschmaschine'  ->  1 Treffer
+ok [alltag] 'Strom'  ->  1 Treffer
+ok [stichwort] 'Rundfunkbeitrag'  ->  1 Treffer
+ok [stichwort] 'Abfindung'  ->  1 Treffer
+ok [stichwort] 'Testament'  ->  1 Treffer
+ok [stichwort] 'Stammkapital'  ->  1 Treffer
+ok [stichwort] 'Fliesen'  ->  1 Treffer
+ok [stichwort] 'Nebenkostenabrechnung'  ->  2 Treffer, 1 Fehlgriff(e)
+ok [stichwort] 'Arbeitszeugnis'  ->  1 Treffer
+ok [stichwort] 'Scheidung'  ->  1 Treffer
+ok [stichwort] 'Reisekosten'  ->  2 Treffer, 1 Fehlgriff(e)
+XX [bedeutung] 'GEZ'  ->  1 Treffer, 1 Fehlgriff(e)
+      Schreiben_0412.pdf fehlt, vorn steht 20220906_0001.pdf
+      Suchwoerter: ['gez']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        20220906_0001.pdf                   0.808  0.588  0/1    0.382  0.0121  ANGEZEIGT
+        IMG_5102.pdf                        0.826  0.708  0/1    0.460  0.0022  raus: Nachsortierung
+        Mappe1.xlsx                         0.806  0.574  0/1    0.373  0.0011  raus: Nachsortierung
+        IMG_4471.pdf                        0.805  0.565  0/1    0.367  0.0009  raus: Nachsortierung
+        Berechnung_KU.xlsx                  0.805  0.564  0/1    0.367  0.0004  raus: Nachsortierung
+        Kostenrechnung_2024-0391.pdf        0.804  0.562  0/1    0.366  0.0004  raus: Nachsortierung
+      * Schreiben_0412.pdf                  0.777  0.381  0/1    0.248       -  raus: kein Kandidat
+
+XX [bedeutung] 'Handyvertrag'  ->  1 Treffer
+      VZF_48213.pdf fehlt, vorn steht Scan2019-03-22_112.pdf
+      Suchwoerter: ['handyvertrag']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Scan2019-03-22_112.pdf              0.823  0.687  0/1    0.447  0.0193  ANGEZEIGT
+        NDA_Northbridge.docx                0.833  0.751  0/1    0.488  0.0005  raus: Nachsortierung
+        AVV_Cloudanbieter_unterschrieben.…  0.827  0.713  0/1    0.463  0.0003  raus: Nachsortierung
+        Satzung_Entwurf.pdf                 0.837  0.779  0/1    0.506  0.0003  raus: Nachsortierung
+        Scan_20240610_0001.pdf              0.826  0.706  0/1    0.459  0.0002  raus: Nachsortierung
+        Verguetungsvereinbarung_Muster.do…  0.856  0.907  0/1    0.589  0.0002  raus: Nachsortierung
+      * VZF_48213.pdf                       0.822  0.683  0/1    0.444       -  raus: kein Kandidat
+
+XX [bedeutung] 'Gehaltsabrechnung'  ->  1 Treffer, 1 Fehlgriff(e)
+      Scan_20240131_0001.pdf fehlt, vorn steht Aufhebungsvertrag_Entwurf.docx
+      Suchwoerter: ['gehaltsabrechnung']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Aufhebungsvertrag_Entwurf.docx      0.842  0.815  1/1    0.880  0.1213  ANGEZEIGT
+        Verguetungsvereinbarung_Muster.do…  0.861  0.943  0/1    0.613  0.0221  raus: Nachsortierung
+        Berechnung_KU.xlsx                  0.856  0.905  0/1    0.588  0.0147  raus: Nachsortierung
+      * Scan_20240131_0001.pdf              0.848  0.856  0/1    0.556  0.0068  raus: Nachsortierung
+        IMG_5102.pdf                        0.840  0.803  0/1    0.522  0.0007  raus: Nachsortierung
+        Präsentation1.pptx                  0.836  0.774  0/1    0.503  0.0002  raus: Nachsortierung
+
+ok [bedeutung] 'Fitnessstudio kündigen'  ->  1 Treffer
+XX [bedeutung] 'Anwaltsrechnung'  ->  2 Treffer
+      Kostenrechnung_2024-0391.pdf erst auf Platz 2, davor Verguetungsvereinbarung_Muster.docx
+      Suchwoerter: ['anwaltsrechnung']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Verguetungsvereinbarung_Muster.do…  0.853  0.887  0/1    0.577  0.9779  ANGEZEIGT
+      * Kostenrechnung_2024-0391.pdf        0.844  0.829  0/1    0.539  0.2979  ANGEZEIGT
+        Brief_Mandant_0314.docx             0.833  0.753  0/1    0.489  0.0139  raus: Nachsortierung
+        Scan_20240131_0001.pdf              0.838  0.784  0/1    0.510  0.0035  raus: Nachsortierung
+        Satzung_Entwurf.pdf                 0.833  0.756  0/1    0.492  0.0015  raus: Nachsortierung
+        Scan_0042.pdf                       0.834  0.759  0/1    0.493  0.0011  raus: Nachsortierung
+
+ok [bedeutung] 'Urlaub'  ->  1 Treffer
+ok [bedeutung] 'Mitgliedsbeitrag im Sportverein'  ->  2 Treffer, 1 Fehlgriff(e)
+ok [frage] 'Wie viel habe ich für Lebensmittel ausgegeben?'  ->  1 Treffer
+ok [frage] 'Wann läuft die Berufungsfrist ab?'  ->  1 Treffer
+ok [frage] 'Bin ich versichert, wenn mein Fahrrad gestohlen wird?'  ->  1 Treffer
+ok [frage] 'Wann geht der Flug nach Mallorca?'  ->  1 Treffer
+ok [frage] 'Wie viel Unterhalt bekommen die Kinder?'  ->  2 Treffer, 1 Fehlgriff(e)
+XX [frage] 'Wie hoch ist die Steuererstattung?'  ->  1 Treffer, 1 Fehlgriff(e)
+      Scan_20240712_0002.pdf fehlt, vorn steht Kostenrechnung_2024-0391.pdf
+      Suchwoerter: ['hoch', 'steuererstattung']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Kostenrechnung_2024-0391.pdf        0.883  1.000  0/2    0.650  0.0423  ANGEZEIGT
+      * Scan_20240712_0002.pdf              0.875  1.000  0/2    0.650  0.0087  raus: Nachsortierung
+        Scan_20240131_0001.pdf              0.855  0.902  0/2    0.586  0.0010  raus: Nachsortierung
+        CCF_000141.pdf                      0.848  0.854  0/2    0.555  0.0004  raus: Nachsortierung
+        dok_2024_02_18.pdf                  0.858  0.917  0/2    0.596  0.0003  raus: Nachsortierung
+        Klage_Albers_v2.docx                0.848  0.855  0/2    0.555  0.0002  raus: Nachsortierung
+
+ok [frage] 'Wann ist der Gütetermin?'  ->  2 Treffer
+ok [fach] '§ 4 KSchG'  ->  2 Treffer
+ok [fach] '3 C 118/24'  ->  3 Treffer
+ok [fach] '§ 536 BGB'  ->  1 Treffer
+ok [fach] 'beA'  ->  1 Treffer
+ok [fach] 'Verfahrensgebühr Nr. 3100 VV RVG'  ->  1 Treffer
+ok [fach] 'Versorgungsausgleich'  ->  2 Treffer
+ok [fach] 'Pflichtteilsstrafklausel'  ->  1 Treffer
+ok [fach] 'Auftragsverarbeitung nach DSGVO'  ->  1 Treffer
+ok [fach] 'elektronisches Empfangsbekenntnis'  ->  1 Treffer
+ok [fach] 'Sozialauswahl'  ->  1 Treffer
+ok [fach] 'Abmahnung wegen Zuspätkommen'  ->  2 Treffer
+ok [fach] 'Vorschuss vom Mandanten anfordern'  ->  2 Treffer, 1 Fehlgriff(e)
+ok [fach] 'Aktennotiz über das Telefonat mit der Mandantin'  ->  1 Treffer
+ok [fach] 'Räumungsklage wegen Mietrückstand'  ->  1 Treffer
+ok [fach] 'Mietminderung wegen Schimmel'  ->  1 Treffer
+ok [fach] 'Erbschein beantragen'  ->  1 Treffer
+ok [fach] 'Stundenhonorar des Anwalts'  ->  1 Treffer
+ok [fach] 'Rücktritt vom Autokauf wegen verschwiegenem Unfallschaden'  ->  1 Treffer
+ok [sprache] 'Kaffeemaschine entkalken'  ->  1 Treffer
+ok [sprache] 'Geheimhaltungsvereinbarung'  ->  1 Treffer
+ok [scan] 'Reifenwechsel'  ->  1 Treffer
+ok [scan] 'Rechnung vom Zahnarzt'  ->  1 Treffer
+ok [scan] 'Mahnbescheid'  ->  1 Treffer
+ok [scan] 'Prozessvollmacht'  ->  3 Treffer, 2 Fehlgriff(e)
+XX [scan] 'Gutachten zum Unfallschaden'  ->  2 Treffer
+      Gutachten_Scan.pdf fehlt, vorn steht Berufungsbegruendung.pdf
+      Suchwoerter: ['gutachten', 'unfallschaden']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Berufungsbegruendung.pdf            0.875  1.000  2/2    1.000  0.5220  ANGEZEIGT
+        Klage_Albers_v2.docx                0.852  0.881  1/2    0.748  0.3836  ANGEZEIGT
+        Scan_Urteil_AG.pdf                  0.835  0.764  0/2    0.497  0.0125  raus: Nachsortierung
+        Neues_Dokument_7.pdf                0.842  0.814  0/2    0.529  0.0054  raus: Nachsortierung
+      * Gutachten_Scan.pdf                  0.844  0.828  1/2    0.766  0.0034  raus: Nachsortierung
+        VS-2291-0087.pdf                    0.880  1.000  0/2    0.650  0.0003  raus: Nachsortierung
+
+XX [scan] 'Urteil zum Verkehrsunfall'  ->  3 Treffer, 2 Fehlgriff(e)
+      Scan_Urteil_AG.pdf fehlt, vorn steht Brief_Mandant_0314.docx
+      Suchwoerter: ['urteil', 'verkehrsunfall']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Brief_Mandant_0314.docx             0.854  0.894  1/2    0.756  0.3940  ANGEZEIGT
+        Scan_0042.pdf                       0.829  0.729  1/2    0.649  0.3471  ANGEZEIGT
+        Klage_Albers_v2.docx                0.841  0.808  1/2    0.700  0.2785  ANGEZEIGT
+      * Scan_Urteil_AG.pdf                  0.830  0.737  1/2    0.706  0.0794  raus: Nachsortierung
+        Berufungsbegruendung.pdf            0.860  0.932  1/2    0.781  0.0257  raus: Nachsortierung
+        VS-2291-0087.pdf                    0.844  0.829  0/2    0.539  0.0002  raus: Nachsortierung
+
+XX [thema] 'Unterlagen zum Unfall von Herrn Albers'  ->  2 Treffer
+      fehlt: Klage_Albers_v2.docx, Scan_Urteil_AG.pdf, Gutachten_Scan.pdf
+      Suchwoerter: ['unterlagen', 'unfall', 'herrn', 'albers']
+        Datei                                 roh   semN  wört  gesamt  nachs.  Status
+        Brief_Mandant_0314.docx             0.898  1.000  3/4    0.912  0.6329  ANGEZEIGT
+        Scan_0042.pdf                       0.834  0.760  2/4    0.669  0.3343  ANGEZEIGT
+        Kostenrechnung_2024-0391.pdf        0.802  0.546  2/4    0.530  0.0488  raus: Nachsortierung
+      * Klage_Albers_v2.docx                0.855  0.897  3/4    0.898  0.0244  raus: Nachsortierung
+      * Scan_Urteil_AG.pdf                  0.807  0.578  2/4    0.551  0.0130  raus: Nachsortierung
+        Berufungsbegruendung.pdf            0.828  0.720  1/4    0.556  0.0017  raus: Nachsortierung
+      * Gutachten_Scan.pdf                  0.785  0.432  1/4    0.369       -  raus: kein Kandidat
+
+ok [thema] 'Arbeitsgerichtsverfahren Wortmann'  ->  4 Treffer
+ok [thema] 'Versicherungen'  ->  2 Treffer
+ok [thema] 'Rechnungen fürs Auto'  ->  1 Treffer
+ok [negativ] 'Rezept für Apfelkuchen'  ->  0 Treffer
+ok [negativ] 'Bewerbung als Pilot'  ->  0 Treffer
+ok [negativ] 'Gästeliste für die Hochzeit'  ->  0 Treffer
+ok [negativ] 'Gartenzaun streichen'  ->  0 Treffer
+
+==============================================================================
+ERGEBNIS: 58 von 69 Anfragen richtig   ·   13 Fehlgriffe insgesamt
+==============================================================================
+  Art           richtig  Fehlgriffe
+  alltag         9 / 12           1
+  stichwort      9 / 9            2
+  bedeutung      3 / 7            3
+  frage          6 / 7            2
+  fach          18 / 18           1
+  sprache        2 / 2            0
+  scan           4 / 6            4
+  thema          3 / 4            0
+  negativ        4 / 4            0
+
+  FALSCH  [alltag] 'Auto': Scan_20240415_0001.pdf erst auf Platz 2, davor Gutachten_Scan.pdf
+  FALSCH  [alltag] 'Drucker': 0027_2607_001.pdf erst auf Platz 2, davor Zeugnis_final.docx
+  FALSCH  [alltag] 'Spende für die Steuererklärung': CCF_000141.pdf erst auf Platz 2, davor Scan_20240712_0002.pdf
+  FALSCH  [bedeutung] 'GEZ': Schreiben_0412.pdf fehlt, vorn steht 20220906_0001.pdf
+  FALSCH  [bedeutung] 'Handyvertrag': VZF_48213.pdf fehlt, vorn steht Scan2019-03-22_112.pdf
+  FALSCH  [bedeutung] 'Gehaltsabrechnung': Scan_20240131_0001.pdf fehlt, vorn steht Aufhebungsvertrag_Entwurf.docx
+  FALSCH  [bedeutung] 'Anwaltsrechnung': Kostenrechnung_2024-0391.pdf erst auf Platz 2, davor Verguetungsvereinbarung_Muster.docx
+  FALSCH  [frage] 'Wie hoch ist die Steuererstattung?': Scan_20240712_0002.pdf fehlt, vorn steht Kostenrechnung_2024-0391.pdf
+  FALSCH  [scan] 'Gutachten zum Unfallschaden': Gutachten_Scan.pdf fehlt, vorn steht Berufungsbegruendung.pdf
+  FALSCH  [scan] 'Urteil zum Verkehrsunfall': Scan_Urteil_AG.pdf fehlt, vorn steht Brief_Mandant_0314.docx
+  FALSCH  [thema] 'Unterlagen zum Unfall von Herrn Albers': fehlt: Klage_Albers_v2.docx, Scan_Urteil_AG.pdf, Gutachten_Scan.pdf
+
+Richtig = vorn steht das erwartete Dokument und alle Pflichtdokumente
+sind dabei. Fehlgriff = angezeigt, obwohl es nicht dazugehoert.
+Vor jeder Aenderung an Modell, Schwellen oder Aufteilung einmal messen,
+danach vergleichen. Soll-Antworten: tests/suchfaelle.py
+
+Rohwerte dieses Modells (Aehnlichkeit Anfrage <-> bester Abschnitt):
+  erwartete Dokumente: 0.748 bis 0.919  (Mittel 0.830)
+  uebrige Dokumente  : 0.659 bis 0.898  (Mittel 0.765)
+  Zeit je Suche      : 5995 ms (wie in der App, mit Bewertung)

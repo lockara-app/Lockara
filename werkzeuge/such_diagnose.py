@@ -51,6 +51,7 @@ if TESTMODUS and not os.environ.get("SMARTSEARCH_DATENORDNER"):
 import numpy as np  # noqa: E402
 
 from smartsearch.kern import modell as modell_modul  # noqa: E402
+from smartsearch.kern import nachsortierung  # noqa: E402
 from smartsearch.kern import ocr  # noqa: E402
 from smartsearch.kern import suche as s  # noqa: E402
 from smartsearch.kern.index import gueltige_paare, index_mit_matrix  # noqa: E402
@@ -185,6 +186,14 @@ def hauptteil():
     print(f"  SCORE_SCHWELLE {s.SCORE_SCHWELLE} · SEMANTIK_MINDEST_OHNE_TREFFER "
           f"{s.SEMANTIK_MINDEST_OHNE_TREFFER} · SEMANTIK {s.SEMANTIK_UNTERGRENZE}–{s.SEMANTIK_OBERGRENZE}")
     print(f"  GEWICHT {s.GEWICHT_SEMANTIK}/{s.GEWICHT_STICHWORT} · RELATIVER_ABSTAND {s.RELATIVER_ABSTAND}")
+    ns = nachsortierung
+    if ns.ist_vorhanden():
+        print(f"Nachsortierung (kern/nachsortierung.py): {ns.MODELL_NAME}")
+        print(f"  KANDIDATEN {ns.KANDIDATEN} x {ns.ABSCHNITTE_JE_DOKUMENT} Abschnitte · "
+              f"MINDEST {ns.MINDEST_WAHRSCHEINLICHKEIT} · RELATIVER_ABSTAND {ns.RELATIVER_ABSTAND} · "
+              f"RRF_K {ns.RRF_K}")
+    else:
+        print("Nachsortierung: AUS (Modell fehlt oder SMARTSEARCH_OHNE_NACHSORTIERUNG=1)")
     print()
 
     eintraege, matrix = index_mit_matrix()
@@ -222,13 +231,29 @@ def hauptteil():
         treffer = s.suche_intern(fall.anfrage, top_n=ANZEIGE_MAX) or []
         zeiten.append(time.time() - t0)
         gezeigt = [os.path.basename(a["datei"]) for _, a in treffer]
+        mit_ns = nachsortierung.ist_vorhanden()
+        ns_werte = ({os.path.basename(p): w for p, w in s.LETZTE_NACHSORTIERUNG.items()}
+                    if mit_ns else {})
         richtig, bemerkung, fehlgriffe = _pruefen(fall, gezeigt)
         ergebnisse.append((fall, richtig, bemerkung, fehlgriffe, gezeigt))
 
         vektor = np.asarray(modell.encode([fall.anfrage], normalize_embeddings=True)[0], dtype="float32")
         werte = matrix @ vektor if matrix is not None else None
         woerter, zeilen = _nachrechnen(fall.anfrage, vektor, werte, nach_datei)
-        if [z[0] for z in zeilen if not z[7]] != gezeigt:
+        if mit_ns:
+            # Die erste Stufe liefert nur die Kandidaten; was angezeigt
+            # wird, entscheidet die Nachsortierung. Status entsprechend.
+            for z in zeilen:
+                if z[0] in gezeigt:
+                    z[7] = ""
+                elif z[0] in ns_werte:
+                    z[7] = "Nachsortierung"
+                else:
+                    z[7] = "kein Kandidat"
+            zeilen.sort(key=lambda z: (z[0] not in gezeigt,
+                                       gezeigt.index(z[0]) if z[0] in gezeigt else 0,
+                                       -ns_werte.get(z[0], -1)))
+        elif [z[0] for z in zeilen if not z[7]] != gezeigt:
             abweichungen.append(fall.anfrage)
         soll = set(fall.erster) | set(fall.dabei)
         for z in zeilen:
@@ -241,7 +266,7 @@ def hauptteil():
         if not richtig:
             print(f"      {bemerkung}")
         if AUSFUEHRLICH or not richtig:
-            _tabelle(zeilen, woerter, soll, alle=AUSFUEHRLICH)
+            _tabelle(zeilen, woerter, soll, alle=AUSFUEHRLICH, ns_werte=ns_werte)
 
     _zusammenfassung(ergebnisse)
     _kalibrierung(roh_richtig, roh_uebrig, float(np.mean(zeiten)) if zeiten else 0.0)
@@ -254,18 +279,20 @@ def hauptteil():
         print("     Die Zaehlung oben stimmt trotzdem - sie kommt aus der App selbst.")
 
 
-def _tabelle(zeilen, woerter, soll, alle):
+def _tabelle(zeilen, woerter, soll, alle, ns_werte=None):
     """Bei falschen Anfragen: die ersten Zeilen und jedes erwartete
     Dokument, damit man sieht, wo es haengen geblieben ist."""
     print(f"      Suchwoerter: {woerter}")
-    print(f"      {'':2}{'Datei':34} {'roh':>6} {'semN':>6} {'wört':>5} {'gesamt':>7}  Status")
+    ns_werte = ns_werte or {}
+    print(f"      {'':2}{'Datei':34} {'roh':>6} {'semN':>6} {'wört':>5} {'gesamt':>7} {'nachs.':>7}  Status")
     for nr, (name, roh, semn, gef, anz, stich, ges, grund) in enumerate(zeilen):
         if not alle and nr >= 6 and name not in soll:
             continue
         markierung = "* " if name in soll else "  "
         status = "ANGEZEIGT" if not grund else "raus: " + grund
+        nachs = f"{ns_werte[name]:7.4f}" if name in ns_werte else f"{'-':>7}"
         print(f"      {markierung}{_kurzname(name):34} {roh:6.3f} {semn:6.3f} {gef:2d}/{anz:<2d} "
-              f"{ges:7.3f}  {status}")
+              f"{ges:7.3f} {nachs}  {status}")
     print()
 
 

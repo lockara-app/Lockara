@@ -9,6 +9,7 @@ Modell.
 """
 
 import os
+import re
 
 from smartsearch.kern import ocr
 
@@ -21,6 +22,91 @@ UNTERSTUETZT = (".txt", ".md", ".pdf", ".docx", ".xlsx", ".pptx")
 # Bibliotheken) haben mit den eigentlichen Nutzer-Dokumenten nichts zu
 # tun, blähen aber den Index unnötig auf und kosten Rechenzeit.
 IGNORIERTE_ORDNERNAMEN = {"venv", ".venv", ".git", "__pycache__", "build", "dist", "node_modules"}
+
+
+# Stand der Leseroutine je Dateityp. Wird hochgezaehlt, wenn sich aendert,
+# WIE ein Dateityp gelesen wird. Bereits indexierte Dateien dieses Typs mit
+# aelterem Stand liest indexierung.py dann einmal neu ein - auch wenn sie
+# selbst sich nicht geaendert haben. Ohne das kaeme eine bessere
+# Leseroutine nur bei Dateien an, die zufaellig spaeter bearbeitet werden.
+LESER_STAND = {".xlsx": 2}
+
+
+def leser_stand(pfad):
+    return LESER_STAND.get(os.path.splitext(pfad)[1].lower(), 1)
+
+
+def _zellwert(wert):
+    """Zelle als Text, so wie ein Mensch sie lesen wuerde: 3180 statt
+    3180.0, Datum als 02.01.2024 statt 2024-01-02 00:00:00."""
+    import datetime
+    if isinstance(wert, datetime.datetime):
+        if wert.hour == wert.minute == wert.second == 0:
+            return wert.strftime("%d.%m.%Y")
+        return wert.strftime("%d.%m.%Y %H:%M")
+    if isinstance(wert, datetime.date):
+        return wert.strftime("%d.%m.%Y")
+    if isinstance(wert, float) and wert.is_integer():
+        return str(int(wert))
+    return str(wert).strip()
+
+
+def _ist_kopfzeile(zellen):
+    """Eine Zeile mit mindestens zwei Eintraegen, die alle Woerter sind
+    (keine Zahlen, keine Daten) - so sieht eine Spaltenueberschrift aus."""
+    belegt = [z for z in zellen if z is not None and str(z).strip()]
+    if len(belegt) < 2:
+        return False
+    return all(isinstance(z, str) and not re.search(r"\d", z) for z in belegt)
+
+
+def lies_tabelle(pfad):
+    """Excel-Tabelle als Text - Zeile fuer Zeile mit den Spaltennamen.
+
+    Frueher wurden die Zellen einer Zeile nur aneinandergehaengt:
+        "Mira, geb. 02.06.2016 2 (6–11 Jahre) 634 509"
+    Wem welche Zahl gehoert, stand nirgends. Fuer die Stichwortsuche war das
+    egal, fuer die Nachsortierung (kern/nachsortierung.py) nicht: sie liest
+    den Text wie ein Mensch und verwarf die Unterhaltsberechnung bei "Wie
+    viel Unterhalt bekommen die Kinder?", obwohl die erste Stufe sie klar
+    vorn hatte (gemessen 09.10.2026). Jetzt:
+        "Kind: Mira, geb. 02.06.2016 · Altersstufe: 2 (6–11 Jahre) ·
+         Tabellenbetrag: 634 · Zahlbetrag nach hälftigem Kindergeld: 509"
+
+    Als Kopfzeile gilt die letzte Zeile aus reinen Woertern (_ist_kopfzeile).
+    Zeilen mit nur einem Eintrag (Ueberschriften, Hinweise) bleiben, wie sie
+    sind. Der Blattname steht davor, wenn er etwas sagt (nicht "Tabelle1").
+    """
+    import openpyxl
+
+    wb = openpyxl.load_workbook(pfad, read_only=True, data_only=True)
+    text_teile = []
+    try:
+        for blatt in wb.worksheets:
+            if not re.fullmatch(r"(Tabelle|Sheet|Blatt)\s*\d*", blatt.title or "", re.I):
+                text_teile.append(f"Blatt: {blatt.title}")
+            kopf = None
+            for zeile in blatt.iter_rows(values_only=True):
+                zellen = list(zeile)
+                belegt = [(i, _zellwert(z)) for i, z in enumerate(zellen)
+                          if z is not None and _zellwert(z)]
+                if not belegt:
+                    continue
+                if _ist_kopfzeile(zellen):
+                    kopf = {i: w for i, w in belegt}
+                    text_teile.append(" | ".join(w for _, w in belegt))
+                    continue
+                if kopf is None or len(belegt) < 2:
+                    text_teile.append(" ".join(w for _, w in belegt))
+                    continue
+                teile = []
+                for i, w in belegt:
+                    name = kopf.get(i)
+                    teile.append(f"{name}: {w}" if name else w)
+                text_teile.append(" · ".join(teile))
+    finally:
+        wb.close()
+    return "\n".join(text_teile)
 
 
 def lies_datei(pfad):
@@ -74,15 +160,7 @@ def lies_datei(pfad):
 
             return "\n".join(text_teile)
         elif ext == ".xlsx":
-            import openpyxl
-            wb = openpyxl.load_workbook(pfad, read_only=True, data_only=True)
-            text_teile = []
-            for sheet in wb.worksheets:
-                for row in sheet.iter_rows(values_only=True):
-                    zeilen_text = " ".join(str(cell) for cell in row if cell is not None)
-                    if zeilen_text.strip():
-                        text_teile.append(zeilen_text)
-            return "\n".join(text_teile)
+            return lies_tabelle(pfad)
         elif ext == ".pptx":
             from pptx import Presentation
             prs = Presentation(pfad)

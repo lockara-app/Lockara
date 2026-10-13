@@ -30,7 +30,11 @@ STOPWOERTER = {
     "gegen", "durch", "bei", "aus", "nach", "rund",
     # Hilfs- und Modalverben
     "ist", "sind", "war", "waren", "habe", "hab", "hatte", "haben", "werde",
-    "wird", "wurde", "kann", "soll", "muss", "möchte",
+    "wird", "wurde", "kann", "soll", "muss", "möchte", "bin", "bist", "hat",
+    "hast", "gibt",
+    # Pronomen und Bindewoerter, die in Fragen vorkommen. Seit auch Woerter
+    # mit drei Buchstaben zaehlen (siehe wortformen), muessen sie hier stehen.
+    "ihn", "ihm", "uns", "wenn", "dann", "aber", "doch", "mal",
     # Fuellwoerter
     "als", "am", "an", "dass", "damit", "auch", "nur", "sehr", "noch", "mehr",
     "schon", "etwas", "alle", "alles", "jeden", "jede", "jedes", "jeder",
@@ -55,6 +59,22 @@ def _entumlaute(wort):
 _MEHRZAHL_ENDUNGEN = ("en", "e", "n", "s")
 
 
+def _nur_ganzes_wort(wort):
+    """Kurze Woerter (bis drei Zeichen) und Zahlen muessen als GANZES Wort
+    im Text stehen.
+
+    Frueher fielen sie ganz heraus (wortformen gab nur Formen ab vier
+    Zeichen zurueck). "BGB", "ZPO", "GEZ", "beA" und die Nummer aus einem
+    Aktenzeichen ("3 C 118/24") zaehlten dadurch NIE als woertlicher
+    Treffer - fuer eine Kanzlei die wichtigsten Suchwoerter ueberhaupt.
+    Gefunden mit dem 50er-Testset am 28.09.2026.
+
+    Warum ganz: Mit der Regel fuer laengere Woerter (Wortgrenze an einem
+    Ende genuegt) faende "gez" jedes "gezahlt", "bea" jedes "Bearbeitung"
+    und "118" das Kennzeichen "BI-MM 1180"."""
+    return len(wort) <= 3 or wort.isdigit()
+
+
 def wortformen(wort):
     """Das Suchwort und eine vorsichtig gebildete Grundform dazu.
 
@@ -68,6 +88,9 @@ def wortformen(wort):
     weitere Abhaengigkeit im Bundle, und die vier Endungen unten decken
     ab, was in Suchanfragen tatsaechlich vorkommt.
     """
+    if _nur_ganzes_wort(wort):
+        # Abkuerzungen und Zahlen: keine Grundform, nur das Wort selbst.
+        return {wort, _entumlaute(wort)}
     formen = {wort, _entumlaute(wort)}
     hat_umlaut = any(z in wort for z in "äöü")
     endungen = ("er",) + _MEHRZAHL_ENDUNGEN if hat_umlaut else _MEHRZAHL_ENDUNGEN
@@ -133,7 +156,10 @@ def _stellen_mit_wortgrenze(form, text):
         anfang, ende = treffer.start(), treffer.end()
         am_wortanfang = anfang == 0 or not text[anfang - 1].isalnum()
         am_wortende = ende >= len(text) or not text[ende].isalnum()
-        if am_wortanfang or am_wortende:
+        if _nur_ganzes_wort(form):
+            if am_wortanfang and am_wortende:
+                yield anfang, ende
+        elif am_wortanfang or am_wortende:
             yield anfang, ende
 
 

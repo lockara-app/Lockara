@@ -14,7 +14,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from smartsearch.kern.dateien import dateien_im_ordner, in_abschnitte_teilen, lies_datei
+from smartsearch.kern.dateien import dateien_im_ordner, in_abschnitte_teilen, leser_stand, lies_datei
 from smartsearch.kern.index import bereinige_index, lade_bestehenden_index, speichere_index
 from smartsearch.kern.modell import geladenes_modell
 
@@ -34,8 +34,14 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
     andere_eintraege = [e for e in alle_eintraege if not e["datei"].startswith(ordner + os.sep)]
 
     bekannt = {e["datei"]: e.get("geaendert", 0) for e in eintraege_dieser_ordner}
+    # Mit welchem Stand der Leseroutine eine Datei eingelesen wurde (siehe
+    # LESER_STAND in dateien.py). Eintraege von vor dieser Angabe gelten
+    # als Stand 1.
+    gelesen_mit = {e["datei"]: e.get("leser", 1) for e in eintraege_dieser_ordner}
     aktuelle_dateien = set(dateien_im_ordner(ordner))
-    zu_verarbeiten = [p for p in aktuelle_dateien if p not in bekannt or os.path.getmtime(p) > bekannt[p]]
+    zu_verarbeiten = [p for p in aktuelle_dateien
+                      if p not in bekannt or os.path.getmtime(p) > bekannt[p]
+                      or gelesen_mit.get(p, 1) < leser_stand(p)]
 
     eintraege_dieser_ordner = [
         e for e in eintraege_dieser_ordner
@@ -81,6 +87,7 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
                     "text_fuer_analyse": None,
                     "geaendert": geaendert,
                     "ohne_inhalt": True,
+                    "leser": leser_stand(pfad),
                 })
                 continue
 
@@ -93,6 +100,7 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
                     "text": abschnitt,
                     "text_fuer_analyse": text_fuer_analyse,
                     "geaendert": geaendert,
+                    "leser": leser_stand(pfad),
                 })
 
     # KI-Vektoren in kleinen Batches berechnen statt alles auf einmal.

@@ -170,7 +170,10 @@ FAELLE = [
 
     # ---- Fachbegriffe, Paragraphen, Aktenzeichen --------------------------
     Fall("§ 4 KSchG", "fach", erster=[KSK, FRISTEN], dabei=[KSK]),
-    Fall("3 C 118/24", "fach", erster=[URTEIL, FRISTEN], dabei=[URTEIL]),
+    Fall("3 C 118/24", "fach", erster=[URTEIL, FRISTEN], dabei=[URTEIL],
+         auch_ok=[KLAGE_UNFALL, VORSCHUSS, KOSTENRECHNUNG, VOLLMACHT, GUTACHTEN]),
+    Fall("§ 536 BGB", "fach", erster=[SCHIMMEL]),
+    Fall("beA", "fach", erster=[BEA]),
     Fall("Verfahrensgebühr Nr. 3100 VV RVG", "fach", erster=[KOSTENRECHNUNG]),
     Fall("Versorgungsausgleich", "fach", erster=[SCHEIDUNG], auch_ok=[FRISTEN]),
     Fall("Pflichtteilsstrafklausel", "fach", erster=[TESTAMENT]),

@@ -83,8 +83,9 @@ if ! python3 -c "import Vision" 2>/dev/null; then
 fi
 
 # Das Suchmodell gehoert in die App, liegt aber nicht im Repository.
-if ! python3 -c "from smartsearch.kern import modell; raise SystemExit(0 if modell.modell_ist_vorhanden() else 1)"; then
-    echo "  Suchmodell fehlt - wird geladen und verkleinert (einmalig, rund 415 MB Download)"
+# Dasselbe gilt fuer den Nachsortierer (kern/nachsortierung.py).
+if ! python3 -c "from smartsearch.kern import modell, nachsortierung; raise SystemExit(0 if modell.modell_ist_vorhanden() and nachsortierung.ist_vorhanden() else 1)"; then
+    echo "  Suchmodell oder Nachsortierer fehlt - wird geladen und verkleinert (einmalig, bis zu 2,7 GB Download)"
     python3 -m werkzeuge.modell_holen || { rot "Suchmodell konnte nicht geladen werden."; exit 1; }
 fi
 

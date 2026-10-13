@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-modell_holen.py - laedt das Suchmodell nach ressourcen/modell/ und
-verkleinert es fuer die Auslieferung.
+modell_holen.py - laedt das Suchmodell und den Nachsortierer nach
+ressourcen/modell/ und verkleinert beide fuer die Auslieferung.
 
 Das Modell gehoert zur App, aber nicht ins Git-Repository. Einmal nach dem
 Klonen ausfuehren (bauen/mac/build.sh ruft es selbst auf, wenn etwas fehlt):
@@ -11,10 +11,12 @@ Klonen ausfuehren (bauen/mac/build.sh ruft es selbst auf, wenn etwas fehlt):
 Was passiert:
   1. Laden von huggingface.co, festgenagelt auf eine bestimmte Fassung
      (REVISION) - so bekommt jeder Rechner und jeder Bau dasselbe Modell.
-     Rund 415 MB, vorhandene Dateien werden nicht erneut geladen.
+     Suchmodell rund 415 MB, Nachsortierer rund 2,3 GB; vorhandene
+     Dateien werden nicht erneut geladen.
   2. Verkleinern: nur die Gewichte werden auf 8 Bit gebracht, gerechnet
-     wird weiter in voller Genauigkeit. Ergebnis rund 100 MB, Warum und wie
-     gemessen: siehe MODELL_DATEI in smartsearch/kern/modell.py.
+     wird weiter in voller Genauigkeit. Ergebnis rund 100 MB bzw. 640 MB.
+     Warum und wie gemessen: siehe MODELL_DATEI in smartsearch/kern/modell.py
+     und smartsearch/kern/nachsortierung.py.
   3. Lizenzhinweis und Pruefsummen dazulegen.
 
 Braucht die Pakete onnx und onnxruntime (stehen in requirements.txt). In
@@ -26,7 +28,7 @@ import os
 import sys
 import urllib.request
 
-from smartsearch.kern import modell
+from smartsearch.kern import modell, nachsortierung
 
 # Festgenagelte Fassung des Modells auf huggingface.co (Stand 28.09.2026).
 # Nur bewusst aendern - danach neu messen (SUCHE PRUEFEN.command).
@@ -53,15 +55,37 @@ unveraendert. Alle uebrigen Dateien sind unveraendert uebernommen.
 """
 
 
-def _laden(datei):
-    ziel = modell.modell_pfad(datei)
+# --- Nachsortierer (kern/nachsortierung.py) --------------------------------
+# Festgenagelte Fassung der ONNX-Ausgabe auf huggingface.co (Stand 09.10.2026).
+NS_REVISION = "6f5ff65298512715a1e669753bc754d2bc8f367b"
+NS_BASIS = f"https://huggingface.co/{nachsortierung.ONNX_QUELLE}/resolve/{NS_REVISION}/"
+NS_LADEN = [nachsortierung.TOKENIZER_DATEI, "config.json",
+            nachsortierung.QUELL_DATEI, nachsortierung.QUELL_DATEN]
+NS_WORTTABELLE = "roberta.embeddings.word_embeddings.weight"
+
+NS_LIZENZ_TEXT = f"""Nachsortierer: {nachsortierung.MODELL_NAME}
+Herkunft:      https://huggingface.co/{nachsortierung.MODELL_NAME}
+ONNX-Fassung:  https://huggingface.co/{nachsortierung.ONNX_QUELLE} ({NS_REVISION})
+Lizenz:        Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+Hersteller:    Beijing Academy of Artificial Intelligence (BAAI)
+
+AENDERUNG DURCH SMARTSEARCH
+Die Datei {nachsortierung.MODELL_DATEI} ist aus {nachsortierung.QUELL_DATEI} abgeleitet:
+Die Gewichte wurden auf 8 Bit verkleinert (Worttabelle je Zeile,
+Matrizen in Bloecken zu 32 Werten). Aufbau und Rechenweg des Modells sind
+unveraendert. Alle uebrigen Dateien sind unveraendert uebernommen.
+"""
+
+
+def _laden(datei, pfad_fn=modell.modell_pfad, basis=BASIS):
+    ziel = pfad_fn(datei)
     if os.path.isfile(ziel) and os.path.getsize(ziel) > 0:
         print(f"  vorhanden   {datei}")
         return ziel
     os.makedirs(os.path.dirname(ziel), exist_ok=True)
     teil = ziel + ".teil"
     print(f"  lade        {datei} ...", end="", flush=True)
-    anfrage = urllib.request.Request(BASIS + datei, headers={"User-Agent": "SmartSearch-Bau"})
+    anfrage = urllib.request.Request(basis + datei, headers={"User-Agent": "SmartSearch-Bau"})
     with urllib.request.urlopen(anfrage, timeout=60) as antwort, open(teil, "wb") as f:
         gesamt = int(antwort.headers.get("Content-Length") or 0)
         geladen, gemeldet = 0, -1
@@ -82,7 +106,7 @@ def _laden(datei):
     return ziel
 
 
-def _worttabelle_8bit(m):
+def _worttabelle_8bit(m, worttabelle=WORTTABELLE):
     """Worttabelle (180.000 Woerter x 384 Werte) je Zeile auf 8 Bit.
 
     Ersetzt Gather(Tabelle) durch Gather(8-Bit-Tabelle) * Gather(Faktor je
@@ -92,24 +116,24 @@ def _worttabelle_8bit(m):
     from onnx import TensorProto, helper, numpy_helper
 
     g = m.graph
-    init = next(i for i in g.initializer if i.name == WORTTABELLE)
+    init = next(i for i in g.initializer if i.name == worttabelle)
     tabelle = numpy_helper.to_array(init).astype("float32")
     g.initializer.remove(init)
 
     faktor = np.abs(tabelle).max(axis=1, keepdims=True) / 127.0
     faktor[faktor == 0] = 1.0
     werte = np.clip(np.round(tabelle / faktor), -127, 127).astype("int8")
-    g.initializer.append(numpy_helper.from_array(werte, WORTTABELLE + "_int8"))
-    g.initializer.append(numpy_helper.from_array(faktor.astype("float32"), WORTTABELLE + "_faktor"))
+    g.initializer.append(numpy_helper.from_array(werte, worttabelle + "_int8"))
+    g.initializer.append(numpy_helper.from_array(faktor.astype("float32"), worttabelle + "_faktor"))
 
-    knoten = next(n for n in g.node if n.op_type == "Gather" and n.input[0] == WORTTABELLE)
+    knoten = next(n for n in g.node if n.op_type == "Gather" and n.input[0] == worttabelle)
     ausgang, ids = knoten.output[0], knoten.input[1]
     stelle = list(g.node).index(knoten)
     g.node.remove(knoten)
     neu = [
-        helper.make_node("Gather", [WORTTABELLE + "_int8", ids], [ausgang + "_int8"], axis=0),
+        helper.make_node("Gather", [worttabelle + "_int8", ids], [ausgang + "_int8"], axis=0),
         helper.make_node("Cast", [ausgang + "_int8"], [ausgang + "_float"], to=TensorProto.FLOAT),
-        helper.make_node("Gather", [WORTTABELLE + "_faktor", ids], [ausgang + "_faktor"], axis=0),
+        helper.make_node("Gather", [worttabelle + "_faktor", ids], [ausgang + "_faktor"], axis=0),
         helper.make_node("Mul", [ausgang + "_float", ausgang + "_faktor"], [ausgang]),
     ]
     for i, n in enumerate(neu):
@@ -117,10 +141,11 @@ def _worttabelle_8bit(m):
     return m
 
 
-def verkleinern():
-    ziel = modell.modell_pfad(modell.MODELL_DATEI)
+def verkleinern(pfad_fn=modell.modell_pfad, quelle=modell.QUELL_DATEI,
+                ziel_datei=modell.MODELL_DATEI, worttabelle=WORTTABELLE):
+    ziel = pfad_fn(ziel_datei)
     if os.path.isfile(ziel):
-        print(f"  vorhanden   {modell.MODELL_DATEI}")
+        print(f"  vorhanden   {ziel_datei}")
         return
     import logging
 
@@ -129,9 +154,9 @@ def verkleinern():
         DefaultWeightOnlyQuantConfig, MatMulNBitsQuantizer)
 
     logging.getLogger("onnxruntime.quantization").setLevel(logging.WARNING)
-    print(f"  verkleinere {modell.QUELL_DATEI} -> {modell.MODELL_DATEI} ...", flush=True)
-    m = onnx.load(modell.modell_pfad(modell.QUELL_DATEI))
-    m = _worttabelle_8bit(m)
+    print(f"  verkleinere {quelle} -> {ziel_datei} ...", flush=True)
+    m = onnx.load(pfad_fn(quelle))
+    m = _worttabelle_8bit(m, worttabelle)
     einstellung = DefaultWeightOnlyQuantConfig(block_size=32, is_symmetric=True, bits=8)
     quant = MatMulNBitsQuantizer(m, algo_config=einstellung)
     quant.process()
@@ -148,19 +173,32 @@ def _pruefsumme(pfad):
     return h.hexdigest()
 
 
+def _beilagen(pfad_fn, lizenz, dateien):
+    with open(pfad_fn("LIZENZ.txt"), "w", encoding="utf-8") as f:
+        f.write(lizenz)
+    # Pruefsummen: so laesst sich spaeter nachweisen, welche Modellfassung
+    # in einer ausgelieferten App steckt.
+    with open(pfad_fn("PRUEFSUMMEN.txt"), "w", encoding="utf-8") as f:
+        for datei in dateien:
+            f.write(f"{_pruefsumme(pfad_fn(datei))}  {datei}\n")
+
+
 def main():
     print(f"Suchmodell nach {modell.modell_pfad()}\n")
     for datei in LADEN:
         _laden(datei)
     verkleinern()
-    with open(modell.modell_pfad("LIZENZ.txt"), "w", encoding="utf-8") as f:
-        f.write(LIZENZ_TEXT)
-    # Pruefsummen: so laesst sich spaeter nachweisen, welche Modellfassung
-    # in einer ausgelieferten App steckt.
-    with open(modell.modell_pfad("PRUEFSUMMEN.txt"), "w", encoding="utf-8") as f:
-        for datei in LADEN + [modell.MODELL_DATEI]:
-            f.write(f"{_pruefsumme(modell.modell_pfad(datei))}  {datei}\n")
-    ok = modell.modell_ist_vorhanden()
+    _beilagen(modell.modell_pfad, LIZENZ_TEXT, LADEN + [modell.MODELL_DATEI])
+
+    print(f"\nNachsortierer nach {nachsortierung.modell_pfad()}\n")
+    for datei in NS_LADEN:
+        _laden(datei, nachsortierung.modell_pfad, NS_BASIS)
+    verkleinern(nachsortierung.modell_pfad, nachsortierung.QUELL_DATEI,
+                nachsortierung.MODELL_DATEI, NS_WORTTABELLE)
+    _beilagen(nachsortierung.modell_pfad, NS_LIZENZ_TEXT,
+              [nachsortierung.TOKENIZER_DATEI, "config.json", nachsortierung.MODELL_DATEI])
+
+    ok = modell.modell_ist_vorhanden() and nachsortierung.ist_vorhanden()
     print("\nFertig." if ok else "\nFEHLER: Modell unvollstaendig.")
     sys.exit(0 if ok else 1)
 
