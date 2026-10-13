@@ -78,6 +78,29 @@ def _meta_schreiben():
 
 
 def _index_datei_lesen():
+    """Wie _index_datei_einmal_lesen(), aber mit bis zu drei Versuchen.
+
+    Ein einzelner Fehlschlag beim Lesen ist nicht gleichbedeutend mit
+    einer kaputten Datei: Beim Start kann ein gleichzeitiger Import in
+    einem anderen Thread scheitern (siehe start.py), und ein Indexlauf
+    ersetzt die Datei gelegentlich genau im falschen Moment. Wer daraus
+    sofort "unlesbar" schliesst, wirft einen guten Index weg und laesst
+    alles neu einlesen - bei grossen Ordnern eine Stunde und mehr.
+    """
+    import time
+    fehler = None
+    for versuch in range(3):
+        try:
+            return _index_datei_einmal_lesen()
+        except FileNotFoundError:
+            raise
+        except Exception as e:
+            fehler = e
+            time.sleep(0.3 * (versuch + 1))
+    raise fehler
+
+
+def _index_datei_einmal_lesen():
     """Liest index.pkl und gibt (eintraege, passend) zurueck.
 
     passend ist False, wenn die Datei mit einem anderen Modell oder in
