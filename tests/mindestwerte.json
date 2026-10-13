@@ -1,0 +1,5 @@
+{
+  "_erklaerung": "Untergrenzen fuer die Suchqualitaet, geprueft von werkzeuge/ci_pruefen.py bei jedem Pull Request. Stand: main am 14.10.2026, gemessen unter Linux mit Tesseract (48 von 67 richtig, 115 Fehlgriffe). Etwas Luft fuer Schwankungen. Wird die Suche besser, hier nachziehen - sonst faellt eine spaetere Verschlechterung nicht auf.",
+  "anteil_richtig_min": 0.68,
+  "fehlgriffe_max": 125
+}

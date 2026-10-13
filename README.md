@@ -114,4 +114,13 @@ Was jeder anfasst:
 
 Bei den gemeinsamen Dateien vorher kurz absprechen, wer woran sitzt.
 
+### Automatische Tests
+
+Jeder Pull Request wird auf GitHub automatisch geprüft (`.github/workflows/tests.yml`, sichtbar unter „Checks“):
+
+- **Schnelltests** auf Mac, Windows und Linux: Pakete installieren, alle Dateien übersetzen, Wortformen- und Lizenz-Test.
+- **Suchqualität** unter Linux: die Suchdiagnose mit den 50 Testdokumenten. Fällt das Ergebnis unter die Werte in `tests/mindestwerte.json`, wird der Pull Request rot. Lokal: `venv/bin/python -m werkzeuge.ci_pruefen`.
+
+Wird die Suche besser, die Werte in `tests/mindestwerte.json` nachziehen.
+
 Wie eine neue Fassung herausgegeben wird, steht in [docs/RELEASE.md](docs/RELEASE.md).
