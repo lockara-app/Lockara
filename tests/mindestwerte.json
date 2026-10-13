@@ -1,0 +1,5 @@
+{
+  "_erklaerung": "Untergrenzen fuer die Suchqualitaet, geprueft von werkzeuge/ci_pruefen.py bei jedem Pull Request. Stand: main am 13.10.2026, gemessen auf dem GitHub-Linux-Rechner mit Tesseract: 43 von 67 richtig (64 %), 102 Fehlgriffe. Die Werte sind niedriger als am Mac (Apple Vision liest Scans besser als Tesseract) und als in der Cloud-Messung (48 von 67, andere Tesseract-Fassung) - massgeblich ist der GitHub-Rechner. Luft: eine Anfrage bzw. rund 10 Fehlgriffe. Wird die Suche besser, hier nachziehen.",
+  "anteil_richtig_min": 0.62,
+  "fehlgriffe_max": 112
+}

@@ -1,0 +1,98 @@
+# Prueft jeden Pull Request und jeden Stand von main automatisch.
+#
+# schnelltests    auf Mac, Windows und Linux: alle Pakete aus requirements.txt
+#                 lassen sich installieren, jede Datei laesst sich uebersetzen,
+#                 die schnellen Tests laufen durch. Faengt z. B. ab, dass eine
+#                 Aenderung am Mac-Teil unter Windows nicht mehr startet.
+# suchqualitaet   die Suchdiagnose mit den 50 Testdokumenten; unter den
+#                 Werten in tests/mindestwerte.json wird der Lauf rot.
+#
+# Ergebnis: auf GitHub im Pull Request unter "Checks".
+
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  schnelltests:
+    name: Schnelltests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Pakete installieren
+        run: python -m pip install -r requirements.txt
+
+      - name: Alle Dateien uebersetzen
+        run: python -m compileall -q smartsearch werkzeuge tests
+
+      - name: Wortformen-Test
+        run: python -m tests.test_wortformen
+
+      - name: Lizenz-Test
+        if: hashFiles('tests/test_lizenz.py') != ''
+        run: python -m tests.test_lizenz
+
+      - name: Begriffsliste-Test
+        if: hashFiles('tests/test_begriffe.py') != ''
+        run: python -m tests.test_begriffe
+
+  suchqualitaet:
+    name: Suchqualitaet (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      # Texterkennung fuer die neun gescannten Testdokumente. Linux hat weder
+      # Apple Vision noch (ohne RapidOCR) etwas Eingebautes - ohne das
+      # wuerden die Scan-Faelle immer scheitern.
+      - name: Tesseract installieren
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q tesseract-ocr tesseract-ocr-deu
+
+      - name: Pakete installieren
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install pytesseract
+
+      # Die Modelle liegen nicht im Repository (mehrere hundert MB bis GB).
+      # Einmal geladen, bleiben sie im Cache, bis sich die Datei aendert,
+      # die festlegt, welche Fassung geladen wird.
+      - name: Modelle aus dem Cache
+        uses: actions/cache@v4
+        with:
+          path: ressourcen/modell
+          key: modelle-${{ hashFiles('werkzeuge/modell_holen.py', 'smartsearch/kern/modell.py', 'smartsearch/kern/nachsortierung.py') }}
+
+      - name: Modelle holen (falls nicht im Cache)
+        run: python -m werkzeuge.modell_holen
+
+      - name: Suchqualitaet messen
+        run: python -m werkzeuge.ci_pruefen
