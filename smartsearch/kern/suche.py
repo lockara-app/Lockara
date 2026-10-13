@@ -16,7 +16,8 @@ from smartsearch.kern.pfade import INDEX_FILE
 from smartsearch.kern.index import gueltige_paare, index_mit_matrix, nur_gueltige_eintraege
 from smartsearch.kern import nachsortierung
 from smartsearch.kern.modell import geladenes_modell
-from smartsearch.kern.sprache import anfrage_woerter, wort_trifft
+from smartsearch.kern.begriffe import anfrage_fuer_modell, wort_oder_begriff_trifft
+from smartsearch.kern.sprache import anfrage_woerter
 
 # Score-Schwelle für suche_intern(): Treffer unterhalb dieses kombinierten
 # Semantik+Keyword-Scores werden verworfen. Empirisch ermittelt (v3.x):
@@ -162,7 +163,7 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None,
 
     modell = geladenes_modell()
     anfrage_vektor = np.asarray(
-        modell.encode([anfrage], normalize_embeddings=True)[0], dtype="float32")
+        modell.encode([anfrage_fuer_modell(anfrage)], normalize_embeddings=True)[0], dtype="float32")
     such_woerter = anfrage_woerter(anfrage)
 
     # EINE Matrixmultiplikation fuer den gesamten Index statt eines
@@ -214,10 +215,10 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None,
         im_dateinamen = 0
         if such_woerter:
             for w in such_woerter:
-                if wort_trifft(w, dateiname):
+                if wort_oder_begriff_trifft(w, dateiname):
                     gefundene_woerter += 1
                     im_dateinamen += 1
-                elif wort_trifft(w, gesamttext):
+                elif wort_oder_begriff_trifft(w, gesamttext):
                     gefundene_woerter += 1
 
         # Semantik auf 0..1 spreizen. BGE-M3 liefert selbst fuer voellig
@@ -308,7 +309,7 @@ def _nachsortieren(anfrage, dokumente, nachsortierer):
             texte.append(e.get("text", ""))
             besitzer.append((nummer, e))
 
-    werte = nachsortierer.wahrscheinlichkeiten(anfrage, texte)
+    werte = nachsortierer.wahrscheinlichkeiten(anfrage_fuer_modell(anfrage), texte)
 
     bewertung = {}   # Kandidat -> (Wahrscheinlichkeit, bester Abschnitt)
     for (nummer, e), p in zip(besitzer, werte):

@@ -57,7 +57,9 @@ from smartsearch.kern import suche as s  # noqa: E402
 from smartsearch.kern.index import gueltige_paare, index_mit_matrix  # noqa: E402
 from smartsearch.kern.modell import geladenes_modell  # noqa: E402
 from smartsearch.kern.pfade import INDEX_FILE, PROJEKT_ORDNER  # noqa: E402
-from smartsearch.kern.sprache import anfrage_woerter, wort_trifft  # noqa: E402
+from smartsearch.kern.begriffe import anfrage_fuer_modell  # noqa: E402
+from smartsearch.kern.begriffe import wort_oder_begriff_trifft as wort_trifft  # noqa: E402
+from smartsearch.kern.sprache import anfrage_woerter  # noqa: E402
 from tests.suchfaelle import ALTE_FAELLE, ARTEN, FAELLE, URSPRUENGLICHE  # noqa: E402
 
 TESTORDNER = os.path.join(PROJEKT_ORDNER, "tests", "testdokumente")
@@ -237,7 +239,7 @@ def hauptteil():
         richtig, bemerkung, fehlgriffe = _pruefen(fall, gezeigt)
         ergebnisse.append((fall, richtig, bemerkung, fehlgriffe, gezeigt))
 
-        vektor = np.asarray(modell.encode([fall.anfrage], normalize_embeddings=True)[0], dtype="float32")
+        vektor = np.asarray(modell.encode([anfrage_fuer_modell(fall.anfrage)], normalize_embeddings=True)[0], dtype="float32")
         werte = matrix @ vektor if matrix is not None else None
         woerter, zeilen = _nachrechnen(fall.anfrage, vektor, werte, nach_datei)
         if mit_ns:

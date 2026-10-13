@@ -27,6 +27,8 @@ alt        die zwoelf urspruenglichen Anfragen mit ihren strengen
 alltag     dieselben zwoelf Anfragen, Soll-Antworten fuer 50 Dokumente
 stichwort  das Suchwort steht so im Dokument
 bedeutung  das Suchwort steht NICHT im Dokument, nur etwas Gleichbedeutendes
+umschreibung  wie bedeutung, aber als Gegenprobe fuer kern/begriffe.py:
+           geschrieben, bevor die Begriffsliste entstand
 frage      eine Frage in normaler Sprache
 fach       Fachbegriffe, Paragraphen, Aktenzeichen
 sprache    deutsche Anfrage, englisches Dokument
@@ -215,6 +217,16 @@ FAELLE = [
     Fall("Rechnungen fürs Auto", "thema", dabei=[WERKSTATT],
          auch_ok=[KFZ_POLICE, KAUFVERTRAG_PKW, HAUSHALTSBUCH]),
 
+    # ---- Umschreibungen (geschrieben am 14.10.2026, VOR der Begriffsliste
+    # in kern/begriffe.py, als Gegenprobe zu den Bedeutungs-Faellen oben) --
+    Fall("Lohnzettel", "umschreibung", erster=[GEHALT]),
+    Fall("Ferienreise", "umschreibung", erster=[URLAUB]),
+    Fall("Telefonrechnung", "umschreibung", erster=[INTERNET, HANDY], auch_ok=[HAUSHALTSBUCH]),
+    Fall("Honorarnote", "umschreibung", erster=[KOSTENRECHNUNG], auch_ok=[HONORAR, VORSCHUSS]),
+    Fall("Zahnbehandlung", "umschreibung", erster=[ZAHNARZT]),
+    Fall("Wohnungsmängel", "umschreibung", erster=[SCHIMMEL], auch_ok=[RAEUMUNG]),
+    Fall("Rundfunkgebühren", "umschreibung", erster=[RUNDFUNK]),
+
     # ---- nichts passt - nichts anzeigen -----------------------------------
     Fall("Rezept für Apfelkuchen", "negativ", keine=True),
     Fall("Bewerbung als Pilot", "negativ", keine=True),
@@ -241,7 +253,7 @@ ALTE_FAELLE = [
 
 ]
 
-ARTEN = ["alt", "alltag", "stichwort", "bedeutung", "frage", "fach", "sprache", "scan", "thema", "negativ"]
+ARTEN = ["alt", "alltag", "stichwort", "bedeutung", "umschreibung", "frage", "fach", "sprache", "scan", "thema", "negativ"]
 
 # Die zehn urspruenglichen Dokumente - fuer den Vergleich mit alten Messungen
 # (such_diagnose --klein)
