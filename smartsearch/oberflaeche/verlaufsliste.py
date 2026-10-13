@@ -223,7 +223,7 @@ class Verlaufsliste:
         loeschen = ctk.CTkButton(
             self.rahmen, text=t("history.clear"), height=22, width=10,
             font=("Helvetica", 10), fg_color="transparent",
-            hover_color=farben.FLAECHE_HOCH, text_color=farben.GEDAEMPFT,
+            hover_color=farben.MARKIERT, text_color=farben.GEDAEMPFT,
             anchor="e", command=self._loeschen)
         loeschen.pack(anchor="e", padx=6, pady=(2, 6))
 
@@ -238,7 +238,7 @@ class Verlaufsliste:
     def _markieren(self, nummer):
         self.markiert = nummer
         for i, (zeile, _) in enumerate(self.zeilen):
-            zeile.configure(fg_color=farben.FLAECHE_HOCH if i == nummer else "transparent")
+            zeile.configure(fg_color=farben.MARKIERT if i == nummer else "transparent")
 
     def _waehlen(self, anfrage):
         self.schliessen()
