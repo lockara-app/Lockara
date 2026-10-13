@@ -40,6 +40,7 @@ def selbsttest():
         "pypdfium2": "Seiten fuer Texterkennung",
         "Vision": "Texterkennung",
         "watchdog": "Automatische Aktualisierung",
+        "cryptography": "Lizenzpruefung",
         "langchain_text_splitters": "Aufteilung in Abschnitte",
     }
 

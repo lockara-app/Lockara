@@ -41,6 +41,8 @@ Immer im Projektordner:
 | Suchqualität messen | `venv/bin/python -m werkzeuge.such_diagnose --testdokumente` | `venv\Scripts\python -m werkzeuge.such_diagnose --testdokumente` |
 | Testdokumente neu erzeugen | `venv/bin/python -m werkzeuge.testdokumente` | `venv\Scripts\python -m werkzeuge.testdokumente` |
 | Index untersuchen | `venv/bin/python -m werkzeuge.diagnose` | `venv\Scripts\python -m werkzeuge.diagnose` |
+| Lizenz-Test (1 Sekunde) | `venv/bin/python -m tests.test_lizenz` | `venv\Scripts\python -m tests.test_lizenz` |
+| Lizenz ausstellen | `venv/bin/python -m werkzeuge.lizenz_ausstellen --help` (siehe `ressourcen/lizenz/LIESMICH.md`) | entsprechend |
 
 Wichtig ist das `-m`. `python smartsearch/start.py` oder `python tests/test_wortformen.py` findet die eigenen Module nicht.
 

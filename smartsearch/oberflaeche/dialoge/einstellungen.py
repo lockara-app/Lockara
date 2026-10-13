@@ -12,7 +12,7 @@ import customtkinter as ctk
 from smartsearch.oberflaeche import farben
 from smartsearch.oberflaeche.i18n import t
 from smartsearch import version
-from smartsearch.kern import einstellungen, ocr
+from smartsearch.kern import einstellungen, lizenz, ocr
 from smartsearch.oberflaeche import i18n
 
 
@@ -45,6 +45,7 @@ def oeffnen(app):
     tab_hilfe = tabview.add(t("settings.tab_help"))
     tab_backup = tabview.add(t("settings.tab_backup"))
     tab_datenschutz = tabview.add(t("settings.tab_privacy"))
+    tab_lizenz = tabview.add(t("settings.tab_license"))
 
     # ---- Allgemein: Autostart + Sprache + Version/Update
     # (Erscheinungsbild sitzt im Schnellzugriff, siehe __init__) ----
@@ -110,6 +111,69 @@ def oeffnen(app):
     datenschutz_scroll = ctk.CTkScrollableFrame(tab_datenschutz, fg_color="transparent")
     datenschutz_scroll.pack(fill="both", expand=True)
     _datenschutz_inhalt(datenschutz_scroll)
+
+    # ---- Lizenz ----
+    _lizenz_tab(app, tab_lizenz)
+
+
+def lizenz_text(status):
+    """(Ueberschrift, Text, Farbe) fuer einen Lizenzstatus - auch vom
+    Hauptfenster benutzt, damit beide Stellen dasselbe sagen."""
+    d = status.daten
+    bis = status.gueltig_bis.strftime("%d.%m.%Y") if status.gueltig_bis else ""
+    if status.art == "gueltig":
+        return (t("license.valid_title"),
+                t("license.valid_text", name=d.get("lizenznehmer", ""),
+                  plaetze=d.get("arbeitsplaetze", "?"), bis=bis), "#2e7d32")
+    if status.art == "kulanz":
+        return (t("license.grace_title"),
+                t("license.grace_text", name=d.get("lizenznehmer", ""), bis=bis,
+                  tage=lizenz.KULANZ_TAGE), "#ef6c00")
+    if status.art == "abgelaufen":
+        return (t("license.expired_title"),
+                t("license.expired_text", name=d.get("lizenznehmer", ""), bis=bis), "#c62828")
+    if status.art == "ungueltig":
+        return (t("license.invalid_title"), t("license.invalid_text"), "#c62828")
+    return (t("license.none_title"), t("license.none_text"), "#78909c")
+
+
+def _lizenz_tab(app, parent):
+    """Lizenz anzeigen und eine Lizenzdatei laden (kern/lizenz.py).
+    Die Pruefung laeuft ohne Internet."""
+    rahmen = ctk.CTkFrame(parent, fg_color="transparent")
+    rahmen.pack(fill="both", expand=True)
+
+    def neu_zeichnen():
+        for w in rahmen.winfo_children():
+            w.destroy()
+        titel, text, farbe = lizenz_text(lizenz.status())
+        ctk.CTkLabel(rahmen, text=titel, font=("Helvetica", 13, "bold"),
+                     text_color=farbe).pack(padx=4, pady=(16, 2), anchor="w")
+        ctk.CTkLabel(rahmen, text=text, font=("Helvetica", 11), text_color="#78909c",
+                     justify="left", wraplength=400).pack(padx=4, pady=(0, 12), anchor="w")
+        ctk.CTkButton(
+            rahmen, text=t("license.load_button"), fg_color=farben.SEITE_KNOPF,
+            hover_color=farben.SEITE_KNOPF_HOVER, anchor="w", command=laden
+        ).pack(padx=4, pady=4, fill="x")
+        ctk.CTkLabel(rahmen, text=t("license.offline_hint"), font=("Helvetica", 10),
+                     text_color="#78909c", justify="left", wraplength=400
+                     ).pack(padx=4, pady=(8, 4), anchor="w")
+
+    def laden():
+        pfad = filedialog.askopenfilename(
+            parent=app.einstellungen_fenster, title=t("license.load_button"),
+            filetypes=[(t("license.file_type"), "*" + lizenz.DATEIENDUNG), ("*", "*")])
+        if not pfad:
+            return
+        ergebnis = lizenz.installieren(pfad)
+        if ergebnis.art == "ungueltig":
+            from tkinter import messagebox
+            messagebox.showwarning(t("license.invalid_title"), t("license.invalid_text"),
+                                   parent=app.einstellungen_fenster)
+        neu_zeichnen()
+        app.lizenz_hinweis_aktualisieren()
+
+    neu_zeichnen()
 
 
 def _hilfe_tab(app, parent):
