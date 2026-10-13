@@ -88,6 +88,18 @@ def oeffnen(app):
         anchor="w", command=lambda: app.pruefe_auf_updates(manuell=True)
     ).pack(padx=4, pady=4, fill="x")
 
+    # Automatische Pruefung beim Start abschaltbar - sie ist die einzige
+    # Verbindung, die SmartSearch von sich aus aufbaut.
+    update_var = ctk.BooleanVar(value=einstellungen.automatische_updatepruefung())
+    ctk.CTkCheckBox(
+        tab_allgemein, text=t("settings.auto_update_checkbox"), variable=update_var,
+        command=lambda: einstellungen.setze_automatische_updatepruefung(update_var.get())
+    ).pack(padx=4, pady=(8, 2), anchor="w")
+    ctk.CTkLabel(
+        tab_allgemein, text=t("settings.auto_update_hint"), font=("Helvetica", 10),
+        text_color="#78909c", justify="left", wraplength=400
+    ).pack(padx=4, pady=(0, 4), anchor="w")
+
     # ---- Hilfe ----
     _hilfe_tab(app, tab_hilfe)
 

@@ -534,7 +534,10 @@ class Hauptfenster(ctk.CTk):
         self.aktualisiere_fehler_anzeige()
         self.check_toggle_loop()
         self.registriere_globalen_hotkey()
-        self.pruefe_auf_updates(manuell=False)
+        # Abschaltbar (Einstellungen bzw. config.json) - siehe
+        # einstellungen.automatische_updatepruefung().
+        if einstellungen.automatische_updatepruefung():
+            self.pruefe_auf_updates(manuell=False)
         self.pruefe_index_passt()
 
         if self.ist_erster_start:
