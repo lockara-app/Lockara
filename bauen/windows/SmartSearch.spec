@@ -53,6 +53,17 @@ for datei in modell.AUSLIEFERN:
     ziel = pathlib.Path('ressourcen') / modell.MODELL_ORDNER / datei
     modell_dateien.append((str(quelle), str(ziel.parent)))
 
+# Oeffentlicher Schluessel fuer die Lizenzpruefung (kern/lizenz.py). Fehlt
+# er, laeuft die App, erkennt aber keine Lizenzdatei an - deshalb hier eine
+# deutliche Warnung statt eines Abbruchs, solange noch verschenkt wird.
+lizenz_schluessel = ROOT / 'ressourcen' / 'lizenz' / 'oeffentlicher_schluessel.txt'
+if lizenz_schluessel.is_file():
+    lizenz_dateien = [(str(lizenz_schluessel), 'ressourcen/lizenz')]
+else:
+    print("WARNUNG: ressourcen/lizenz/oeffentlicher_schluessel.txt fehlt - "
+          "die App erkennt keine Lizenzen an (werkzeuge/lizenz_ausstellen.py --schluessel-erzeugen)")
+    lizenz_dateien = []
+
 # onnxruntime bringt eigene Bibliotheken mit, die PyInstaller nur ueber
 # collect_dynamic_libs sicher findet.
 from PyInstaller.utils.hooks import collect_dynamic_libs  # noqa: E402
@@ -63,7 +74,7 @@ a = Analysis(
     pathex=[str(ROOT)],
     binaries=ort_bibliotheken,
     datas=[(str(ROOT / 'LICENSE.txt'), '.'),
-           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + modell_dateien,
+           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + lizenz_dateien + modell_dateien,
     hiddenimports=[
         'onnxruntime',
         'tokenizers',

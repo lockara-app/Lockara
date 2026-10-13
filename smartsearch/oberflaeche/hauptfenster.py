@@ -27,7 +27,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from smartsearch import plattform, version
-from smartsearch.kern import (einstellungen, einzelinstanz, index, indexierung,
+from smartsearch.kern import (einstellungen, einzelinstanz, index, indexierung, lizenz,
                               modell, ocr, sprache, suche, updates)
 from smartsearch.kern import ordner as ordner_verwaltung
 from smartsearch.kern import rueckmeldung
@@ -541,6 +541,7 @@ class Hauptfenster(ctk.CTk):
         self.aktualisiere_fehler_anzeige()
         self.check_toggle_loop()
         self.registriere_globalen_hotkey()
+        self.lizenz_hinweis_aktualisieren()
         # Abschaltbar (Einstellungen bzw. config.json) - siehe
         # einstellungen.automatische_updatepruefung().
         if einstellungen.automatische_updatepruefung():
@@ -1220,6 +1221,17 @@ class Hauptfenster(ctk.CTk):
         einfuehrung.zeigen(self, mit_ordnerauswahl)
 
     # ---------- AUTO-UPDATE ----------
+
+    def lizenz_hinweis_aktualisieren(self):
+        """Nach Ablauf der Lizenz (und der Kulanzzeit) ein dauerhafter
+        Hinweis in der Statuszeile. Gesperrt wird nichts (kern/lizenz.py)."""
+        try:
+            stand = lizenz.status()
+        except Exception:
+            return
+        if stand.art == "abgelaufen" and stand.gueltig_bis:
+            self.setze_status(t("license.status_expired",
+                                bis=stand.gueltig_bis.strftime("%d.%m.%Y")))
 
     def pruefe_auf_updates(self, manuell=False):
         """Fragt GitHub nach dem neuesten Release ab und zeigt

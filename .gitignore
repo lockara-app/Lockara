@@ -65,3 +65,6 @@ such-diagnose*.txt
 
 # Uebergabe-Ordner fuer Git-Buendel (Claude-Sitzungen)
 _uebergabe/
+# Lizenzdateien von Kunden und private Schluessel nie versionieren
+*.smartsearch-lizenz
+privat.key
