@@ -44,7 +44,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Alle Dateien uebersetzen
-        run: python -m compileall -q smartsearch werkzeuge tests
+        run: python -m compileall -q lockara werkzeuge tests
 
       - name: Wortformen-Test
         run: python -m tests.test_wortformen
@@ -92,7 +92,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ressourcen/modell
-          key: modelle-${{ hashFiles('werkzeuge/modell_holen.py', 'smartsearch/kern/modell.py', 'smartsearch/kern/nachsortierung.py') }}
+          key: modelle-${{ hashFiles('werkzeuge/modell_holen.py', 'lockara/kern/modell.py', 'lockara/kern/nachsortierung.py') }}
 
       - name: Modelle holen (falls nicht im Cache)
         run: python -m werkzeuge.modell_holen

@@ -1,4 +1,4 @@
-# SmartSearch
+# Lockara
 
 Lokale Dateisuche für Mac und Windows: findet Dokumente nach ihrem **Inhalt**, nicht nach dem Dateinamen. Alles läuft auf dem eigenen Rechner, ohne Konto und ohne Cloud.
 
@@ -36,7 +36,7 @@ Immer im Projektordner:
 
 | | Mac | Windows |
 |---|---|---|
-| Programm | `venv/bin/python -m smartsearch` | `venv\Scripts\python -m smartsearch` |
+| Programm | `venv/bin/python -m lockara` | `venv\Scripts\python -m lockara` |
 | Wortformen-Test (1 Sekunde) | `venv/bin/python -m tests.test_wortformen` | `venv\Scripts\python -m tests.test_wortformen` |
 | Begriffsliste-Test (1 Sekunde) | `venv/bin/python -m tests.test_begriffe` | `venv\Scripts\python -m tests.test_begriffe` |
 | Rolltest (1 Sekunde) | `venv/bin/python -m tests.test_rollen` | `venv\Scripts\python -m tests.test_rollen` |
@@ -46,12 +46,12 @@ Immer im Projektordner:
 | Lizenz-Test (1 Sekunde) | `venv/bin/python -m tests.test_lizenz` | `venv\Scripts\python -m tests.test_lizenz` |
 | Lizenz ausstellen | `venv/bin/python -m werkzeuge.lizenz_ausstellen --help` (siehe `ressourcen/lizenz/LIESMICH.md`) | entsprechend |
 
-Wichtig ist das `-m`. `python smartsearch/start.py` oder `python tests/test_wortformen.py` findet die eigenen Module nicht.
+Wichtig ist das `-m`. `python lockara/start.py` oder `python tests/test_wortformen.py` findet die eigenen Module nicht.
 
 ## Wo was liegt
 
 ```
-smartsearch/              das Programm
+lockara/              das Programm
 ├── __main__.py           Startpunkt
 ├── start.py              Programmstart, nur eine laufende Kopie, Selbsttest
 ├── version.py            die Versionsnummer, an genau einer Stelle
@@ -113,9 +113,9 @@ Was jeder anfasst:
 
 | Arbeit an … | Dateien |
 |---|---|
-| Windows | `smartsearch/plattform/windows.py`, `bauen/windows/` |
-| Mac | `smartsearch/plattform/mac.py`, `bauen/mac/` |
-| beide Systeme | `smartsearch/kern/`, `smartsearch/oberflaeche/` |
+| Windows | `lockara/plattform/windows.py`, `bauen/windows/` |
+| Mac | `lockara/plattform/mac.py`, `bauen/mac/` |
+| beide Systeme | `lockara/kern/`, `lockara/oberflaeche/` |
 
 Bei den gemeinsamen Dateien vorher kurz absprechen, wer woran sitzt.
 

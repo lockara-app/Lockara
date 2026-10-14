@@ -1,9 +1,9 @@
-# SmartSearch ausprobieren
+# Lockara ausprobieren
 
 Danke, dass du dir das ansiehst. Es dauert etwa 20 Minuten, davon sind
 10 Minuten Warten.
 
-SmartSearch durchsucht Dokumente auf dem Mac nach **Inhalt** statt nach
+Lockara durchsucht Dokumente auf dem Mac nach **Inhalt** statt nach
 Dateinamen. Du beschreibst, worum es ging, und bekommst die Datei — auch
 wenn sie ganz anders heißt.
 
@@ -11,13 +11,13 @@ wenn sie ganz anders heißt.
 
 ## Installieren
 
-**1.** DMG öffnen, SmartSearch auf **Programme** ziehen.
+**1.** DMG öffnen, Lockara auf **Programme** ziehen.
 
 **2.** Programm per Doppelklick öffnen. Es kommt eine Warnung, dass es
 nicht geöffnet werden kann — auf **Fertig** klicken.
 
 **3.** Systemeinstellungen › **Datenschutz & Sicherheit** öffnen, nach
-unten scrollen. Dort steht „SmartSearch wurde blockiert". Daneben auf
+unten scrollen. Dort steht „Lockara wurde blockiert". Daneben auf
 **Trotzdem öffnen** klicken und bestätigen.
 
 Das ist normal: Für Apples Beglaubigung braucht es ein kostenpflichtiges
@@ -60,7 +60,7 @@ Diese Zahl ist das Wichtigste an der ganzen Rückmeldung.
 ## Wieder loswerden
 
 Programm in den Papierkorb, und den Ordner
-`~/Library/Application Support/SmartSearch/` löschen. Das ist alles;
+`~/Library/Application Support/Lockara/` löschen. Das ist alles;
 sonst bleibt nichts zurück.
 
 ## Zur Beruhigung

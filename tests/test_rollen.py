@@ -7,7 +7,7 @@
 import sys
 import types
 
-from smartsearch.oberflaeche import rollen
+from lockara.oberflaeche import rollen
 
 R = rollen.PIXEL_JE_RASTE
 M = rollen.PIXEL_JE_MAC_EINHEIT

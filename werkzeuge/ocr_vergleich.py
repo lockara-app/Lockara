@@ -30,8 +30,8 @@ import re
 import sys
 import time
 
-from smartsearch.kern import ocr
-from smartsearch.kern.pfade import PROJEKT_ORDNER
+from lockara.kern import ocr
+from lockara.kern.pfade import PROJEKT_ORDNER
 
 
 def _norm(text):

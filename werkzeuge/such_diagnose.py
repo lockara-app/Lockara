@@ -22,7 +22,7 @@ Aufruf (im Projektordner):
         die Schwellen in kern/suche.py sitzen muessen.
 
 Welche Modelldatei benutzt wird, laesst sich fuer Messungen umstellen:
-    SMARTSEARCH_MODELLDATEI=onnx/model.onnx venv/bin/python -m werkzeuge.such_diagnose --testdokumente
+    LOCKARA_MODELLDATEI=onnx/model.onnx venv/bin/python -m werkzeuge.such_diagnose --testdokumente
 
 WAS "RICHTIG" HEISST
 --------------------
@@ -40,26 +40,26 @@ import tempfile
 import time
 from collections import defaultdict
 
-# Muss VOR dem ersten Import aus smartsearch stehen: pfade.py legt den
+# Muss VOR dem ersten Import aus lockara stehen: pfade.py legt den
 # Datenordner beim Import fest.
 TESTMODUS = "--testdokumente" in sys.argv
 KLEIN = "--klein" in sys.argv
 AUSFUEHRLICH = "--ausfuehrlich" in sys.argv
-if TESTMODUS and not os.environ.get("SMARTSEARCH_DATENORDNER"):
-    os.environ["SMARTSEARCH_DATENORDNER"] = tempfile.mkdtemp(prefix="smartsearch-messung-")
+if TESTMODUS and not os.environ.get("LOCKARA_DATENORDNER"):
+    os.environ["LOCKARA_DATENORDNER"] = tempfile.mkdtemp(prefix="lockara-messung-")
 
 import numpy as np  # noqa: E402
 
-from smartsearch.kern import modell as modell_modul  # noqa: E402
-from smartsearch.kern import nachsortierung  # noqa: E402
-from smartsearch.kern import ocr  # noqa: E402
-from smartsearch.kern import suche as s  # noqa: E402
-from smartsearch.kern.index import gueltige_paare, index_mit_matrix  # noqa: E402
-from smartsearch.kern.modell import geladenes_modell  # noqa: E402
-from smartsearch.kern.pfade import INDEX_FILE, PROJEKT_ORDNER  # noqa: E402
-from smartsearch.kern.begriffe import anfrage_fuer_modell  # noqa: E402
-from smartsearch.kern.begriffe import wort_oder_begriff_trifft as wort_trifft  # noqa: E402
-from smartsearch.kern.sprache import anfrage_woerter  # noqa: E402
+from lockara.kern import modell as modell_modul  # noqa: E402
+from lockara.kern import nachsortierung  # noqa: E402
+from lockara.kern import ocr  # noqa: E402
+from lockara.kern import suche as s  # noqa: E402
+from lockara.kern.index import gueltige_paare, index_mit_matrix  # noqa: E402
+from lockara.kern.modell import geladenes_modell  # noqa: E402
+from lockara.kern.pfade import INDEX_FILE, PROJEKT_ORDNER  # noqa: E402
+from lockara.kern.begriffe import anfrage_fuer_modell  # noqa: E402
+from lockara.kern.begriffe import wort_oder_begriff_trifft as wort_trifft  # noqa: E402
+from lockara.kern.sprache import anfrage_woerter  # noqa: E402
 from tests.suchfaelle import ALTE_FAELLE, ARTEN, FAELLE, URSPRUENGLICHE  # noqa: E402
 
 TESTORDNER = os.path.join(PROJEKT_ORDNER, "tests", "testdokumente")
@@ -73,10 +73,10 @@ ANZEIGE_MAX = 10   # so viele Treffer zeigt die App hoechstens (suche_intern top
 def _testindex_bauen():
     """Frischer Index im eigenen Datenordner. --klein: nur die zehn
     urspruenglichen Dokumente, dafuer in einen eigenen Ordner kopiert."""
-    from smartsearch.kern import indexierung, ordner
+    from lockara.kern import indexierung, ordner
     quelle = TESTORDNER
     if KLEIN:
-        quelle = tempfile.mkdtemp(prefix="smartsearch-klein-")
+        quelle = tempfile.mkdtemp(prefix="lockara-klein-")
         for name in URSPRUENGLICHE:
             shutil.copy2(os.path.join(TESTORDNER, name), quelle)
     ordner.befehl_ordner_hinzufuegen(quelle)
@@ -195,7 +195,7 @@ def hauptteil():
               f"MINDEST {ns.MINDEST_WAHRSCHEINLICHKEIT} · RELATIVER_ABSTAND {ns.RELATIVER_ABSTAND} · "
               f"RRF_K {ns.RRF_K}")
     else:
-        print("Nachsortierung: AUS (Modell fehlt oder SMARTSEARCH_OHNE_NACHSORTIERUNG=1)")
+        print("Nachsortierung: AUS (Modell fehlt oder LOCKARA_OHNE_NACHSORTIERUNG=1)")
     print()
 
     eintraege, matrix = index_mit_matrix()

@@ -1,34 +1,34 @@
-# SmartSearch installieren
+# Lockara installieren
 
 ## 1. Programm in den Programme-Ordner ziehen
 
-Ziehen Sie **SmartSearch** im geöffneten Fenster auf den Ordner **Programme**.
+Ziehen Sie **Lockara** im geöffneten Fenster auf den Ordner **Programme**.
 Danach können Sie das Fenster schließen und das geladene Abbild auswerfen.
 
 ## 2. Beim ersten Start: Freigabe erteilen
 
-SmartSearch ist nicht von Apple beglaubigt. macOS öffnet das Programm deshalb
+Lockara ist nicht von Apple beglaubigt. macOS öffnet das Programm deshalb
 beim ersten Mal nicht sofort, sondern zeigt eine Warnung. Das ist kein Fehler
 und kein Hinweis auf Schadsoftware — Apple verlangt für die Beglaubigung ein
-kostenpflichtiges Entwicklerkonto, und SmartSearch wird derzeit kostenlos
+kostenpflichtiges Entwicklerkonto, und Lockara wird derzeit kostenlos
 abgegeben.
 
 So geben Sie das Programm frei:
 
-1. Öffnen Sie SmartSearch im Programme-Ordner per Doppelklick.
+1. Öffnen Sie Lockara im Programme-Ordner per Doppelklick.
    Es erscheint eine Meldung, dass das Programm nicht geöffnet werden konnte.
 2. Klicken Sie auf **Fertig**.
 3. Öffnen Sie **Systemeinstellungen › Datenschutz & Sicherheit**.
-4. Scrollen Sie nach unten. Dort steht: „SmartSearch wurde blockiert."
+4. Scrollen Sie nach unten. Dort steht: „Lockara wurde blockiert."
 5. Klicken Sie daneben auf **Trotzdem öffnen**.
 6. Bestätigen Sie mit Ihrem Kennwort oder Touch ID.
 
-Diese Freigabe ist einmalig. Ab dem zweiten Start öffnet sich SmartSearch
+Diese Freigabe ist einmalig. Ab dem zweiten Start öffnet sich Lockara
 wie jedes andere Programm.
 
 ## 3. Ohne Internet
 
-Das Suchmodell ist bereits im Programm enthalten. SmartSearch lädt nichts
+Das Suchmodell ist bereits im Programm enthalten. Lockara lädt nichts
 nach und braucht für die Suche keine Internetverbindung – auch nicht beim
 ersten Start.
 Ihre Dateien verlassen Ihren Mac zu keinem Zeitpunkt.
@@ -45,7 +45,7 @@ umfangreich ist und die erste Indexierung entsprechend lange dauern würde.
 
 ## 5. Zugriff auf Ordner erlauben
 
-Beim Einlesen fragt macOS, ob SmartSearch auf Dokumente, Schreibtisch oder
+Beim Einlesen fragt macOS, ob Lockara auf Dokumente, Schreibtisch oder
 Downloads zugreifen darf. Ohne diese Erlaubnis findet das Programm dort
 nichts. Bestätigen Sie die Abfrage mit **Erlauben**.
 
@@ -66,7 +66,7 @@ Dateityp in der Filterleiste oben vielleicht abgewählt? Gelesen werden PDF,
 Word, Excel, PowerPoint, Text- und Markdown-Dateien.
 
 **Beschreiben Sie den Inhalt, nicht den Dateinamen.**
-SmartSearch sucht nach dem, was in einem Dokument steht. „Kündigung
+Lockara sucht nach dem, was in einem Dokument steht. „Kündigung
 Mobilfunkvertrag" führt weiter als ein einzelnes Stichwort. Wörter, die
 wörtlich im Dokument vorkommen, wirken dabei am stärksten.
 
@@ -77,9 +77,9 @@ Meldung zeigt, welche Dateien betroffen sind.
 
 **Wo liegen meine Daten?**
 Der Suchindex liegt in Ihrem Benutzerordner unter
-`~/Library/Application Support/SmartSearch/`. Sie können ihn jederzeit
+`~/Library/Application Support/Lockara/`. Sie können ihn jederzeit
 ansehen oder löschen; beim nächsten Einlesen wird er neu aufgebaut.
 
-**Wie deinstalliere ich SmartSearch?**
+**Wie deinstalliere ich Lockara?**
 Programm in den Papierkorb legen und den genannten Ordner löschen. Es bleiben
 keine weiteren Dateien zurück.

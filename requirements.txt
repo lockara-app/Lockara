@@ -1,4 +1,4 @@
-# Pakete, die SmartSearch braucht - fuer Mac UND Windows in EINER Datei.
+# Pakete, die Lockara braucht - fuer Mac UND Windows in EINER Datei.
 #
 # Was nur auf einem System gebraucht wird, steht mit einer Bedingung dahinter
 # (z. B. ; sys_platform == "darwin"). pip wertet sie selbst aus und laesst

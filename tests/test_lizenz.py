@@ -12,12 +12,12 @@ import os
 import sys
 import tempfile
 
-from smartsearch.kern import lizenz
+from lockara.kern import lizenz
 from werkzeuge import lizenz_ausstellen as aussteller
 
 
 def main():
-    ordner = tempfile.mkdtemp(prefix="smartsearch-lizenztest-")
+    ordner = tempfile.mkdtemp(prefix="lockara-lizenztest-")
     privat = os.path.join(ordner, "privat.key")
     oeffentlich = os.path.join(ordner, "oeffentlich.txt")
     aussteller.schluessel_erzeugen(privat, oeffentlich)
@@ -55,7 +55,7 @@ def main():
     erwarte("kaputte Datei", "kein json", "ungueltig", "format")
     erwarte("ohne eingebauten Schluessel", gut, "ungueltig", "kein_schluessel", mit=None)
 
-    fremd_ordner = tempfile.mkdtemp(prefix="smartsearch-lizenztest-fremd-")
+    fremd_ordner = tempfile.mkdtemp(prefix="lockara-lizenztest-fremd-")
     fremd_privat = os.path.join(fremd_ordner, "privat.key")
     aussteller.schluessel_erzeugen(fremd_privat, os.path.join(fremd_ordner, "o.txt"))
     fremd = aussteller.ausstellen("Kanzlei Test", 5, "2027-10-31", privat=fremd_privat, heute=heute)

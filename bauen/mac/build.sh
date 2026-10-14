@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build.sh - Baut SmartSearch.app und daraus ein fertiges DMG zum Verteilen.
+# build.sh - Baut Lockara.app und daraus ein fertiges DMG zum Verteilen.
 #
 # Aufruf (von ueberall):
 #     bauen/mac/build.sh
@@ -23,16 +23,16 @@ PROJEKT="$(cd "$(dirname "$0")/../.." && pwd)"
 HIER="$PROJEKT/bauen/mac"
 cd "$PROJEKT"
 
-NAME="SmartSearch"
-VERSION="$(grep -m1 'APP_VERSION' smartsearch/version.py | sed 's/[^0-9.]//g')"
+NAME="Lockara"
+VERSION="$(grep -m1 'APP_VERSION' lockara/version.py | sed 's/[^0-9.]//g')"
 
 # Bewusst OHNE Versionsnummer im Dateinamen.
 #
 # Der Downloadknopf auf der Website zeigt auf
-#   .../releases/latest/download/SmartSearch.dmg
+#   .../releases/latest/download/Lockara.dmg
 # GitHub loest "latest" selbst auf und liefert die Datei aus dem neuesten
 # Release aus - aber nur, wenn sie immer gleich heisst. Mit
-# "SmartSearch-1.0.1.dmg" muesste der Link bei jeder Fassung von Hand
+# "Lockara-1.0.1.dmg" muesste der Link bei jeder Fassung von Hand
 # geaendert werden, und irgendwann vergisst man es und der Knopf zeigt
 # ins Leere. Welche Version drinsteckt, steht im Release-Titel und in der
 # App selbst.
@@ -42,7 +42,7 @@ blau()  { printf "\033[1;34m%s\033[0m\n" "$1"; }
 gruen() { printf "\033[1;32m%s\033[0m\n" "$1"; }
 rot()   { printf "\033[1;31m%s\033[0m\n" "$1"; }
 
-blau "SmartSearch $VERSION wird gebaut"
+blau "Lockara $VERSION wird gebaut"
 echo
 
 # ---------------------------------------------------------------------------
@@ -84,7 +84,7 @@ fi
 
 # Das Suchmodell gehoert in die App, liegt aber nicht im Repository.
 # Dasselbe gilt fuer den Nachsortierer (kern/nachsortierung.py).
-if ! python3 -c "from smartsearch.kern import modell, nachsortierung; raise SystemExit(0 if modell.modell_ist_vorhanden() and nachsortierung.ist_vorhanden() else 1)"; then
+if ! python3 -c "from lockara.kern import modell, nachsortierung; raise SystemExit(0 if modell.modell_ist_vorhanden() and nachsortierung.ist_vorhanden() else 1)"; then
     echo "  Suchmodell oder Nachsortierer fehlt - wird geladen und verkleinert (einmalig, bis zu 2,7 GB Download)"
     python3 -m werkzeuge.modell_holen || { rot "Suchmodell konnte nicht geladen werden."; exit 1; }
 fi

@@ -1,7 +1,7 @@
 """
 kanzlei.py - 25 Dokumente aus einer Anwaltskanzlei.
 
-Die Zielgruppe von SmartSearch. Kanzlei, Mandanten, Gegner und Aktenzeichen
+Die Zielgruppe von Lockara. Kanzlei, Mandanten, Gegner und Aktenzeichen
 sind erfunden; Gerichte und Paragraphen sind echt, damit Fachbegriffe so
 vorkommen wie in einer echten Akte.
 

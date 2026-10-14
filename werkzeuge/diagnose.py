@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-diagnose.py - Werkzeug zur Fehlersuche im SmartSearch-Index.
+diagnose.py - Werkzeug zur Fehlersuche im Lockara-Index.
 
 Beantwortet die Frage, die bei "die Suche findet meine Datei nicht" immer
 zuerst geklaert werden muss: Ist die Datei ueberhaupt im Index, und wenn
@@ -19,13 +19,13 @@ import os
 import pickle
 import sys
 
-from smartsearch.kern.pfade import INDEX_FILE
+from lockara.kern.pfade import INDEX_FILE
 
 
 def lade():
     if not os.path.exists(INDEX_FILE):
         print(f"Kein Index gefunden unter:\n  {INDEX_FILE}\n")
-        print("Starten Sie SmartSearch und waehlen Sie 'Index aktualisieren'.")
+        print("Starten Sie Lockara und waehlen Sie 'Index aktualisieren'.")
         sys.exit(1)
     with open(INDEX_FILE, "rb") as f:
         return pickle.load(f)
@@ -120,7 +120,7 @@ def zeige_scores(anfrage, anzahl=15):
     """Fuehrt eine echte Suche aus und zeigt die Bewertung der besten
     Treffer - so laesst sich unterscheiden, ob eine Datei fehlt oder nur
     schlecht bewertet wird."""
-    from smartsearch.kern import suche as smart_search
+    from lockara.kern import suche as smart_search
 
     print(f'Bewertung fuer "{anfrage}"\n')
     ergebnisse = smart_search.suche_intern(anfrage, top_n=anzahl)

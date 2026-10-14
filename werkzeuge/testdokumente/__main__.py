@@ -1,7 +1,7 @@
 import os
 import sys
 
-from smartsearch.kern.pfade import PROJEKT_ORDNER
+from lockara.kern.pfade import PROJEKT_ORDNER
 
 from . import haushalt, kanzlei
 from .bausteine import schreiben

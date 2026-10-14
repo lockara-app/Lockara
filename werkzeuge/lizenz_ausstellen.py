@@ -5,7 +5,7 @@ lizenz_ausstellen.py - Lizenzdateien fuer Kunden ausstellen.
 EINMALIG: Schluesselpaar anlegen
     venv/bin/python -m werkzeuge.lizenz_ausstellen --schluessel-erzeugen
 
-    Der PRIVATE Schluessel landet in ~/.smartsearch-lizenz/privat.key
+    Der PRIVATE Schluessel landet in ~/.lockara-lizenz/privat.key
     (nur fuer Sie lesbar). Er darf nie ins Repository, nie in eine Mail,
     nie in die App. Wer ihn hat, kann beliebige Lizenzen ausstellen -
     unbedingt sichern (z. B. Passwortmanager), denn ohne ihn lassen sich
@@ -20,12 +20,12 @@ LIZENZ AUSSTELLEN
         --lizenznehmer "Kanzlei Mustermann & Partner" \\
         --arbeitsplaetze 5 --gueltig-bis 2027-10-31
 
-    Ergebnis: eine Datei *.smartsearch-lizenz im aktuellen Ordner, die Sie
-    der Kanzlei schicken. Sie laedt sie in SmartSearch unter
+    Ergebnis: eine Datei *.lockara-lizenz im aktuellen Ordner, die Sie
+    der Kanzlei schicken. Sie laedt sie in Lockara unter
     Einstellungen > Lizenz.
 
 PRUEFEN
-    venv/bin/python -m werkzeuge.lizenz_ausstellen --pruefen datei.smartsearch-lizenz
+    venv/bin/python -m werkzeuge.lizenz_ausstellen --pruefen datei.lockara-lizenz
 """
 
 import argparse
@@ -37,11 +37,21 @@ import re
 import sys
 import uuid
 
-from smartsearch.kern import lizenz
-from smartsearch.kern.pfade import PROJEKT_ORDNER
+from lockara.kern import lizenz
+from lockara.kern.pfade import PROJEKT_ORDNER
 
-PRIVAT_ORDNER = os.path.expanduser("~/.smartsearch-lizenz")
+PRIVAT_ORDNER = os.path.expanduser("~/.lockara-lizenz")
 PRIVAT_DATEI = os.path.join(PRIVAT_ORDNER, "privat.key")
+
+# Vor der Umbenennung lag der Schluessel in ~/.smartsearch-lizenz. Er
+# gehoert zum oeffentlichen Schluessel im Repository und darf nicht
+# verloren gehen - deshalb wird er dort weiter gefunden, solange am neuen
+# Ort keiner liegt. Ein neuer Schluessel wuerde alle ausgestellten
+# Lizenzen ungueltig machen.
+_FRUEHERE_PRIVAT_DATEI = os.path.expanduser("~/.smartsearch-lizenz/privat.key")
+if not os.path.exists(PRIVAT_DATEI) and os.path.exists(_FRUEHERE_PRIVAT_DATEI):
+    PRIVAT_ORDNER = os.path.dirname(_FRUEHERE_PRIVAT_DATEI)
+    PRIVAT_DATEI = _FRUEHERE_PRIVAT_DATEI
 OEFFENTLICH_DATEI = os.path.join(PROJEKT_ORDNER, "ressourcen", lizenz.OEFFENTLICHER_SCHLUESSEL)
 
 
@@ -67,7 +77,7 @@ def schluessel_erzeugen(privat=PRIVAT_DATEI, oeffentlich=OEFFENTLICH_DATEI, uebe
     os.chmod(privat, 0o600)
     os.makedirs(os.path.dirname(oeffentlich), exist_ok=True)
     with open(oeffentlich, "w", encoding="utf-8") as f:
-        f.write("# Oeffentlicher Schluessel fuer SmartSearch-Lizenzen (Ed25519).\n"
+        f.write("# Oeffentlicher Schluessel fuer Lockara-Lizenzen (Ed25519).\n"
                 "# Nicht geheim. Erzeugt mit werkzeuge/lizenz_ausstellen.py.\n"
                 + base64.b64encode(roh_oeffentlich).decode() + "\n")
     return privat, oeffentlich
@@ -103,11 +113,11 @@ def ausstellen(lizenznehmer, arbeitsplaetze, gueltig_bis, privat=PRIVAT_DATEI, h
 
 def _dateiname(lizenznehmer, gueltig_bis):
     kurz = re.sub(r"[^A-Za-z0-9]+", "-", lizenznehmer).strip("-")[:40] or "Lizenz"
-    return f"SmartSearch-{kurz}-bis-{gueltig_bis}{lizenz.DATEIENDUNG}"
+    return f"Lockara-{kurz}-bis-{gueltig_bis}{lizenz.DATEIENDUNG}"
 
 
 def main():
-    p = argparse.ArgumentParser(description="SmartSearch-Lizenzen ausstellen")
+    p = argparse.ArgumentParser(description="Lockara-Lizenzen ausstellen")
     p.add_argument("--schluessel-erzeugen", action="store_true")
     p.add_argument("--ueberschreiben", action="store_true")
     p.add_argument("--lizenznehmer")

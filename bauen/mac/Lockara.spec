@@ -1,0 +1,194 @@
+# -*- mode: python ; coding: utf-8 -*-
+#
+# Baubefehl (im Projektordner):  pyinstaller bauen/mac/Lockara.spec --noconfirm
+# Normalerweise nicht direkt, sondern ueber bauen/mac/build.sh.
+#
+# hiddenimports: PyInstaller findet diese Pakete nicht von allein, weil sie
+# erst zur Laufzeit dynamisch importiert werden. Ohne sie startet die
+# gebaute .app und stuerzt beim ersten Suchen/Indexieren ab.
+
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+import pathlib
+import re
+
+# Diese Datei liegt in bauen/<system>/ - der Projektordner ist zwei Ebenen
+# darueber. SPECPATH setzt PyInstaller selbst auf den Ordner dieser Datei.
+ROOT = pathlib.Path(SPECPATH).resolve().parents[1]  # noqa: F821
+
+# Die Versionsnummer steht an genau EINER Stelle: lockara/version.py.
+# Sie hier ein zweites Mal zu pflegen ging schief - bis Fassung 1.0.2 stand
+# im Info.plist durchgehend "1.0.1". Der Finder und spaeter auch die
+# Beglaubigung durch Apple lesen aber genau diesen Wert.
+APP_VERSION = re.search(
+    r'APP_VERSION\s*=\s*"([^"]+)"',
+    (ROOT / "lockara" / "version.py").read_text(encoding="utf-8"),
+).group(1)
+
+# Das Suchmodell liegt in ressourcen/modell/ (nicht im Repository). In die
+# App kommen nur die Dateien aus modell.AUSLIEFERN - das grosse Quellmodell
+# (390 MB), aus dem die ausgelieferte Datei abgeleitet ist, bleibt draussen.
+# Fehlt etwas, bricht der Bau hier ab: eine App ohne Modell kann nicht suchen.
+import sys  # noqa: E402
+sys.path.insert(0, str(ROOT))
+from lockara.kern import modell  # noqa: E402
+if not modell.modell_ist_vorhanden():
+    raise SystemExit("Suchmodell fehlt - zuerst: venv/bin/python -m werkzeuge.modell_holen")
+modell_dateien = []
+for datei in modell.AUSLIEFERN:
+    quelle = pathlib.Path(modell.modell_pfad(datei))
+    if not quelle.is_file():
+        raise SystemExit(f"Suchmodell unvollstaendig, es fehlt: {quelle}")
+    ziel = pathlib.Path('ressourcen') / modell.MODELL_ORDNER / datei
+    modell_dateien.append((str(quelle), str(ziel.parent)))
+
+# Oeffentlicher Schluessel fuer die Lizenzpruefung (kern/lizenz.py). Fehlt
+# er, laeuft die App, erkennt aber keine Lizenzdatei an - deshalb hier eine
+# deutliche Warnung statt eines Abbruchs, solange noch verschenkt wird.
+lizenz_schluessel = ROOT / 'ressourcen' / 'lizenz' / 'oeffentlicher_schluessel.txt'
+if lizenz_schluessel.is_file():
+    lizenz_dateien = [(str(lizenz_schluessel), 'ressourcen/lizenz')]
+else:
+    print("WARNUNG: ressourcen/lizenz/oeffentlicher_schluessel.txt fehlt - "
+          "die App erkennt keine Lizenzen an (werkzeuge/lizenz_ausstellen.py --schluessel-erzeugen)")
+    lizenz_dateien = []
+# Der Nachsortierer (kern/nachsortierung.py) kommt genauso mit. Er ist
+# Pflicht: ohne ihn liefe die App zwar, saehe aber deutlich schlechter aus
+# (siehe Messung dort) - das soll beim Bauen auffallen, nicht beim Kunden.
+from lockara.kern import nachsortierung  # noqa: E402
+if not nachsortierung.ist_vorhanden():
+    raise SystemExit("Nachsortierer fehlt - zuerst: venv/bin/python -m werkzeuge.modell_holen")
+for datei in nachsortierung.AUSLIEFERN:
+    quelle = pathlib.Path(nachsortierung.modell_pfad(datei))
+    if not quelle.is_file():
+        raise SystemExit(f"Nachsortierer unvollstaendig, es fehlt: {quelle}")
+    ziel = pathlib.Path('ressourcen') / nachsortierung.MODELL_ORDNER / datei
+    modell_dateien.append((str(quelle), str(ziel.parent)))
+
+# onnxruntime bringt eigene Bibliotheken mit, die PyInstaller nur ueber
+# collect_dynamic_libs sicher findet.
+from PyInstaller.utils.hooks import collect_dynamic_libs  # noqa: E402
+ort_bibliotheken = collect_dynamic_libs('onnxruntime')
+
+# Texterkennung RapidOCR (kern/ocr.py): bringt Modelle und Einstellungen
+# als Dateien im Paket mit (rapidocr/models, *.yaml) und laedt seine
+# Bausteine zur Laufzeit nach Namen - beides findet PyInstaller allein nicht.
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules  # noqa: E402
+rapidocr_dateien = collect_data_files('rapidocr')
+rapidocr_module = collect_submodules('rapidocr')
+
+a = Analysis(
+    [str(ROOT / 'lockara' / '__main__.py')],
+    pathex=[str(ROOT)],
+    binaries=ort_bibliotheken,
+    # LICENSE.txt liegt im fertigen Bundle bei - eine App ohne
+    # beiliegende Nutzungsbedingungen sollte man nicht verteilen.
+    # ressourcen/ (Symbole) liest das Programm zur Laufzeit ueber
+    # pfade.ressource() - siehe dort.
+    datas=[(str(ROOT / 'LICENSE.txt'), '.'),
+           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + lizenz_dateien + modell_dateien + rapidocr_dateien,
+    hiddenimports=[
+        'onnxruntime',
+        'tokenizers',
+        'customtkinter',
+        'pypdf',
+        'pdfplumber',
+        'docx',
+        'openpyxl',
+        'pptx',
+        'watchdog',
+        # Texterkennung: pypdfium2 rendert die Seiten, Vision erkennt den
+        # Text. Beide werden nur zur Laufzeit importiert und von
+        # PyInstaller sonst nicht gefunden.
+        'pypdfium2',
+        'rapidocr', 'cv2', 'shapely', 'pyclipper', 'omegaconf',
+        'Vision',
+        'Foundation',
+        'objc',
+    ] + rapidocr_module,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    # Ballast, den PyInstaller sonst mit einpackt. Vorsichtig gewaehlt -
+    # nur Pakete, die Lockara nachweislich nicht benutzt. Sparen
+    # zusammen mehrere hundert Megabyte im fertigen Bundle.
+    #
+    # PyTorch & Co. stehen bewusst hier: seit dem Wechsel auf onnxruntime
+    # braucht Lockara sie nicht mehr, in einem aelteren venv koennen sie
+    # aber noch installiert sein - dann wuerden sie still 2 GB mitgepackt.
+    excludes=[
+        'matplotlib', 'IPython', 'jupyter', 'notebook', 'nbconvert',
+        'pytest', 'sphinx', 'setuptools._distutils',
+        'PyQt5', 'PyQt6', 'PySide2', 'PySide6', 'wx',
+        'tkinter.test',
+        'torch', 'torchgen', 'torchvision', 'transformers',
+        'sentence_transformers', 'sklearn', 'scipy',
+    ],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='Lockara',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    # UPX aus: komprimierte Binaries loesen auf dem Mac regelmaessig
+    # Gatekeeper-Meldungen aus ("ist beschaedigt") und machen spaeteres
+    # Signieren/Notarisieren unnoetig fragil.
+    upx=False,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=[str(ROOT / 'ressourcen' / 'icons' / 'icon.icns')],
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name='Lockara',
+)
+app = BUNDLE(
+    coll,
+    name='Lockara.app',
+    icon=str(ROOT / 'ressourcen' / 'icons' / 'icon.icns'),
+    # Eindeutige Bundle-ID: macOS braucht sie fuer Autostart (LaunchAgent),
+    # Berechtigungen und spaeteres Signieren. Ohne sie behandelt das System
+    # die App bei jedem Update wie eine voellig neue Anwendung.
+    bundle_identifier='de.lockara.app',
+    info_plist={
+        'CFBundleName': 'Lockara',
+        'CFBundleDisplayName': 'Lockara',
+        'CFBundleShortVersionString': APP_VERSION,
+        'CFBundleVersion': APP_VERSION,
+        'NSHighResolutionCapable': True,
+        # Ohne LSUIElement=False taucht die App nicht normal im Dock auf.
+        'LSUIElement': False,
+        # macOS soll das Bundle nie ein zweites Mal starten. Ohne diesen
+        # Eintrag kann waehrend der Indexierung ein zweites Dock-Symbol
+        # auftauchen (ein Arbeits-Kindprozess startet dann das komplette
+        # Bundle noch einmal). Zusammen mit multiprocessing.freeze_support()
+        # ganz oben in lockara/__main__.py ist das doppelt abgesichert.
+        'LSMultipleInstancesProhibited': True,
+        # Klartext-Begruendungen, die macOS im Berechtigungsdialog zeigt.
+        # Fehlen sie, bricht der Zugriff auf Dokumente/Downloads/Schreibtisch
+        # unter neueren macOS-Versionen kommentarlos ab.
+        'NSDesktopFolderUsageDescription':
+            'Lockara durchsucht die Dateien auf Ihrem Schreibtisch - ausschliesslich lokal auf diesem Mac.',
+        'NSDocumentsFolderUsageDescription':
+            'Lockara durchsucht Ihre Dokumente - ausschliesslich lokal auf diesem Mac, es wird nichts uebertragen.',
+        'NSDownloadsFolderUsageDescription':
+            'Lockara durchsucht Ihren Downloads-Ordner - ausschliesslich lokal auf diesem Mac.',
+    },
+)

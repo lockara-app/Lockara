@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Liest aus der INSTALLIERTEN SmartSearch.app aus, welche Update-Adresse
+"""Liest aus der INSTALLIERTEN Lockara.app aus, welche Update-Adresse
 und welche Versionsnummer wirklich im Programm stecken.
 
 Aufruf:  python3 pruefe_installierte_app.py
 """
 import os, re, struct, sys, zlib
 
-APP = "/Applications/SmartSearch.app"
-EXE = os.path.join(APP, "Contents/MacOS/SmartSearch")
+APP = "/Applications/Lockara.app"
+EXE = os.path.join(APP, "Contents/MacOS/Lockara")
 
 if not os.path.exists(EXE):
     sys.exit("Nicht gefunden: " + EXE)

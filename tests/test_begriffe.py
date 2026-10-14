@@ -5,7 +5,7 @@
 """
 import sys
 
-from smartsearch.kern import begriffe
+from lockara.kern import begriffe
 
 
 def main():

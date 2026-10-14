@@ -16,7 +16,7 @@ LOG="build_log.txt"
 exec > >(tee "$LOG") 2>&1
 
 echo "=========================================="
-echo " SmartSearch - Bau des Programms"
+echo " Lockara - Bau des Programms"
 echo " $(date '+%d.%m.%Y %H:%M:%S')"
 echo "=========================================="
 echo

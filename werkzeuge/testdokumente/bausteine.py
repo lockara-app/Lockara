@@ -32,7 +32,7 @@ import zipfile
 from dataclasses import dataclass, field
 
 FESTES_DATUM = datetime.datetime(2024, 9, 1, 12, 0, 0)
-HINWEIS = "Frei erfundenes Testdokument fuer SmartSearch"
+HINWEIS = "Frei erfundenes Testdokument fuer Lockara"
 
 
 @dataclass
