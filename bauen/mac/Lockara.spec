@@ -181,6 +181,13 @@ app = BUNDLE(
         # Bundle noch einmal). Zusammen mit multiprocessing.freeze_support()
         # ganz oben in lockara/__main__.py ist das doppelt abgesichert.
         'LSMultipleInstancesProhibited': True,
+        # Mindest-macOS. Die mitgelieferten Bibliotheken (Python 3.13 und
+        # Tcl/Tk aus Homebrew, numpy) sind fuer macOS 15 gebaut und starten
+        # auf aelteren Systemen nicht. Ohne diesen Eintrag oeffnet macOS die
+        # App trotzdem und sie stuerzt ab; mit ihm meldet macOS sauber
+        # "erfordert macOS 15". Senken laesst sich der Wert erst mit einem
+        # Python, das fuer aeltere Systeme gebaut ist (python.org-Installer).
+        'LSMinimumSystemVersion': '15.0',
         # Klartext-Begruendungen, die macOS im Berechtigungsdialog zeigt.
         # Fehlen sie, bricht der Zugriff auf Dokumente/Downloads/Schreibtisch
         # unter neueren macOS-Versionen kommentarlos ab.
