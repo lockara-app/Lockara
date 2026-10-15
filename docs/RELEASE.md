@@ -12,7 +12,7 @@ Stand: 27.09.2026. Bisher nur für den Mac, Windows folgt.
 6. **Release auf GitHub** anlegen:
    - Tag `vX.Y.Z`, Ziel `main`.
    - Das DMG muss **exakt `Lockara.dmg`** heißen. Der Downloadknopf der Website leitet auf `…/releases/latest/download/Lockara.dmg` weiter, bei einem anderen Namen läuft er ins Leere.
-7. **Website hochladen:** `cd ~/Projekt/Lockara/Webseite && npx wrangler@latest pages deploy website --project-name=lockara`. Die Website liegt neben dem App-Ordner, nicht im Repository.
+7. **Website hochladen:** `cd ~/Projekt/SmartSearch/Webseite && npx wrangler@latest pages deploy website --project-name=smartsearch` (das Cloudflare-Pages-Projekt heisst weiterhin „smartsearch“, ein Umbenennen ist dort nicht moeglich; erreichbar ist es unter lockara.de). Die Website liegt neben dem App-Ordner, nicht im Repository.
 8. **Kontrollieren:** Die Website mit angehängtem `?x=1` aufrufen. Ohne das zeigt der Browser eine zwischengespeicherte Fassung.
 
 ## Updateprüfung
