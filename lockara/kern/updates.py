@@ -28,13 +28,13 @@ from lockara import version
 # und IP-Adresse; die App fragt einmal pro Start, das reicht mit großem
 # Abstand. Ein Zugangsschlüssel würde das Limit anheben, hat aber in einer
 # ausgelieferten App nichts zu suchen - er wäre auslesbar.
-GITHUB_RELEASES_API = "https://api.github.com/repos/smartsearch-app/SmartSearch/releases/latest"
+GITHUB_RELEASES_API = "https://api.github.com/repos/lockara-app/Lockara/releases/latest"
 
 # Wohin der "Herunterladen"-Knopf im Update-Fenster fuehrt.
 #
 # Bewusst die eigene Adresse und nicht die des Releases: Wer Lockara
 # benutzt, hat mit GitHub nichts zu tun und soll dort auch nicht landen.
-# smartsearch-app.com/Lockara.dmg leitet still zur Datei im neuesten
+# lockara.de/Lockara.dmg leitet still zur Datei im neuesten
 # Release weiter (siehe website/_redirects) - sichtbar ist nur die eigene
 # Adresse, und der Download startet sofort.
 #
@@ -42,7 +42,7 @@ GITHUB_RELEASES_API = "https://api.github.com/repos/smartsearch-app/SmartSearch/
 # kein Widerspruch: die Pruefung stellt ein Programm, und solche Anfragen
 # weist die Bot-Erkennung des Webhosters ab. Den Knopf klickt ein Mensch,
 # es oeffnet sich ein Browser - und Browser werden nicht abgewiesen.
-DOWNLOAD_ADRESSE = "https://smartsearch-app.com/Lockara.dmg"
+DOWNLOAD_ADRESSE = "https://lockara.de/Lockara.dmg"
 UPDATE_CHECK_TIMEOUT_SEK = 5
 
 

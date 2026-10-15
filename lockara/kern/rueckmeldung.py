@@ -15,7 +15,7 @@ from lockara import version
 from lockara.kern.einstellungen import lade_config, speichere_config
 
 # Anschrift fuer Rueckmeldungen - gehoert zur eigenen Domain.
-RUECKMELDUNG_ADRESSE = "kontakt@smartsearch-app.com"
+RUECKMELDUNG_ADRESSE = "kontakt@lockara.de"
 
 # Schwellen bewusst hoch und die Bitte hoechstens zweimal: wer einmal
 # "Nicht jetzt" sagt, meint meistens "nie" - ein zweites Nachfassen nach

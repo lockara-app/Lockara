@@ -2,7 +2,7 @@
 
 Lokale Dateisuche für Mac und Windows: findet Dokumente nach ihrem **Inhalt**, nicht nach dem Dateinamen. Alles läuft auf dem eigenen Rechner, ohne Konto und ohne Cloud.
 
-Website: [smartsearch-app.com](https://smartsearch-app.com). Die Website selbst liegt **nicht** in diesem Repository.
+Website: [lockara.de](https://lockara.de). Die Website selbst liegt **nicht** in diesem Repository.
 
 ## Einrichten
 
