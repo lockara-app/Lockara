@@ -15,12 +15,12 @@
 cd "$(dirname "$0")/../.." || exit 1
 
 LOG="pruef_log.txt"
-BINARY="dist/SmartSearch.app/Contents/MacOS/SmartSearch"
+BINARY="dist/Lockara.app/Contents/MacOS/Lockara"
 
 exec > >(tee "$LOG") 2>&1
 
 echo "=========================================="
-echo " SmartSearch - Inhalt des Bundles pruefen"
+echo " Lockara - Inhalt des Bundles pruefen"
 echo " $(date '+%d.%m.%Y %H:%M:%S')"
 echo "=========================================="
 echo
@@ -37,11 +37,11 @@ fi
 # Laeuft schon eine Kopie?
 # ---------------------------------------------------------------------------
 # Seit die Anwendung sich nur noch einmal starten laesst, wuerde ein
-# "open dist/SmartSearch.app" bei bereits laufender Kopie einfach diese nach
+# "open dist/Lockara.app" bei bereits laufender Kopie einfach diese nach
 # vorne holen - man testet dann versehentlich die ALTE Fassung und haelt sie
 # fuer die neue. Deshalb hier vorher nachsehen.
-if pgrep -f "SmartSearch.app/Contents/MacOS/SmartSearch" >/dev/null 2>&1; then
-    printf "\033[1;31m%s\033[0m\n" "SmartSearch laeuft bereits."
+if pgrep -f "Lockara.app/Contents/MacOS/Lockara" >/dev/null 2>&1; then
+    printf "\033[1;31m%s\033[0m\n" "Lockara laeuft bereits."
     echo
     echo "  Bitte zuerst beenden: Lupensymbol in der Menueleiste anklicken"
     echo "  und 'Beenden' waehlen. Sonst wird die bereits laufende Fassung"
@@ -84,12 +84,12 @@ echo
 # einwandfreien App vierzehnmal "FEHLT" schreibt, verunsichert nur.
 # Der Importtest oben beantwortet die Frage abschliessend.
 
-codesign --verify --deep --verbose=2 dist/SmartSearch.app 2>&1 | sed 's/^/  /'
+codesign --verify --deep --verbose=2 dist/Lockara.app 2>&1 | sed 's/^/  /'
 echo
 /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
-    dist/SmartSearch.app/Contents/Info.plist 2>/dev/null \
+    dist/Lockara.app/Contents/Info.plist 2>/dev/null \
     | sed 's/^/  Version: /'
-du -sh dist/SmartSearch.app | sed 's/^/  Groesse: /'
+du -sh dist/Lockara.app | sed 's/^/  Groesse: /'
 
 
 echo
@@ -105,7 +105,7 @@ echo
 echo " Kommen Treffer, ist das Bundle vollstaendig."
 echo
 
-open dist/SmartSearch.app
+open dist/Lockara.app
 
 echo "=========================================="
 echo " Fenster kann geschlossen werden."

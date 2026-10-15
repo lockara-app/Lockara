@@ -18,7 +18,7 @@ venv/bin/python -u -X faulthandler -m werkzeuge.such_diagnose --testdokumente 2>
 if [ -f ressourcen/modell/granite-embedding-97m-multilingual-r2/onnx/model.onnx ]; then
     echo
     echo "=== Zum Vergleich: volle Genauigkeit (float32) ==="
-    SMARTSEARCH_MODELLDATEI=onnx/model.onnx venv/bin/python -u -X faulthandler -m werkzeuge.such_diagnose --testdokumente 2>&1 | tee such-diagnose-float32.txt
+    LOCKARA_MODELLDATEI=onnx/model.onnx venv/bin/python -u -X faulthandler -m werkzeuge.such_diagnose --testdokumente 2>&1 | tee such-diagnose-float32.txt
 fi
 
 echo

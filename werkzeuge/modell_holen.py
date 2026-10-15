@@ -15,8 +15,8 @@ Was passiert:
      Dateien werden nicht erneut geladen.
   2. Verkleinern: nur die Gewichte werden auf 8 Bit gebracht, gerechnet
      wird weiter in voller Genauigkeit. Ergebnis rund 100 MB bzw. 640 MB.
-     Warum und wie gemessen: siehe MODELL_DATEI in smartsearch/kern/modell.py
-     und smartsearch/kern/nachsortierung.py.
+     Warum und wie gemessen: siehe MODELL_DATEI in lockara/kern/modell.py
+     und lockara/kern/nachsortierung.py.
   3. Lizenzhinweis und Pruefsummen dazulegen.
 
 Braucht die Pakete onnx und onnxruntime (stehen in requirements.txt). In
@@ -28,7 +28,7 @@ import os
 import sys
 import urllib.request
 
-from smartsearch.kern import modell, nachsortierung
+from lockara.kern import modell, nachsortierung
 
 # Festgenagelte Fassung des Modells auf huggingface.co (Stand 28.09.2026).
 # Nur bewusst aendern - danach neu messen (SUCHE PRUEFEN.command).
@@ -47,7 +47,7 @@ Fassung:    {REVISION}
 Lizenz:     Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 Hersteller: IBM
 
-AENDERUNG DURCH SMARTSEARCH
+AENDERUNG DURCH LOCKARA
 Die Datei {modell.MODELL_DATEI} ist aus {modell.QUELL_DATEI} abgeleitet:
 Die Gewichte wurden auf 8 Bit verkleinert (Worttabelle je Zeile,
 Matrizen in Bloecken zu 32 Werten). Aufbau und Rechenweg des Modells sind
@@ -69,7 +69,7 @@ ONNX-Fassung:  https://huggingface.co/{nachsortierung.ONNX_QUELLE} ({NS_REVISION
 Lizenz:        Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 Hersteller:    Beijing Academy of Artificial Intelligence (BAAI)
 
-AENDERUNG DURCH SMARTSEARCH
+AENDERUNG DURCH LOCKARA
 Die Datei {nachsortierung.MODELL_DATEI} ist aus {nachsortierung.QUELL_DATEI} abgeleitet:
 Die Gewichte wurden auf 8 Bit verkleinert (Worttabelle je Zeile,
 Matrizen in Bloecken zu 32 Werten). Aufbau und Rechenweg des Modells sind
@@ -85,7 +85,7 @@ def _laden(datei, pfad_fn=modell.modell_pfad, basis=BASIS):
     os.makedirs(os.path.dirname(ziel), exist_ok=True)
     teil = ziel + ".teil"
     print(f"  lade        {datei} ...", end="", flush=True)
-    anfrage = urllib.request.Request(basis + datei, headers={"User-Agent": "SmartSearch-Bau"})
+    anfrage = urllib.request.Request(basis + datei, headers={"User-Agent": "Lockara-Bau"})
     with urllib.request.urlopen(anfrage, timeout=60) as antwort, open(teil, "wb") as f:
         gesamt = int(antwort.headers.get("Content-Length") or 0)
         geladen, gemeldet = 0, -1

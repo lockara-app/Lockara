@@ -1,4 +1,4 @@
-# Aufbau von SmartSearch
+# Aufbau von Lockara
 
 Stand: 27.09.2026, Fassung 1.0.6.
 
@@ -25,7 +25,7 @@ Pfeile bedeuten: *darf importieren*. Umgekehrt nie.
 
 In einem früheren Projekt des Kollegen hat eine Java-Klasse Rechnen, Kollisionen, Zeichnen und das Erzeugen von Objekten gleichzeitig erledigt. Die 1.000 Zeilen später auseinanderzunehmen hat Tage gekostet.
 
-SmartSearch stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. Darin steckten Indexlauf, Updateprüfung, Ordnerüberwachung, Einzelinstanz, Rückmeldung, Suchverlauf und alle Dialoge. Das hätte zwei konkrete Folgen gehabt:
+Lockara stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. Darin steckten Indexlauf, Updateprüfung, Ordnerüberwachung, Einzelinstanz, Rückmeldung, Suchverlauf und alle Dialoge. Das hätte zwei konkrete Folgen gehabt:
 
 1. **Umstieg auf PySide6:** Die Logik hätte man aus dem Oberflächencode herausoperieren müssen. Jetzt bleibt `kern/` beim Umstieg unangetastet, neu geschrieben wird nur `oberflaeche/`.
 2. **Zwei Leute, eine Datei:** Mac- und Windows-Arbeit hätten sich ständig in derselben Datei überschnitten. Jetzt arbeitet jeder überwiegend in seiner eigenen `plattform/`-Datei.
@@ -50,7 +50,7 @@ SmartSearch stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. D
 - **Neue Datei im Datenordner:** Den Pfad in `kern/pfade.py` festlegen, nirgends sonst.
 - **Neues Symbol oder Bild:** Nach `ressourcen/`, geladen über `pfade.ressource("icons/…")`. Nur so findet die gebaute App es.
 - **Neuer Dialog:** Eine eigene Datei in `oberflaeche/dialoge/` mit einer Funktion, die das Hauptfenster als `app` bekommt.
-- **Versionsnummer:** Nur `smartsearch/version.py`. Die Specs und `build.sh` lesen sie von dort.
+- **Versionsnummer:** Nur `lockara/version.py`. Die Specs und `build.sh` lesen sie von dort.
 
 ## Bekannte Baustellen
 

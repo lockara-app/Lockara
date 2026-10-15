@@ -22,7 +22,7 @@ import re
 import subprocess
 import sys
 
-from smartsearch.kern.pfade import PROJEKT_ORDNER
+from lockara.kern.pfade import PROJEKT_ORDNER
 
 MINDESTWERTE = os.path.join(PROJEKT_ORDNER, "tests", "mindestwerte.json")
 MUSTER = re.compile(r"ERGEBNIS: (\d+) von (\d+) Anfragen richtig\s+\S\s+(\d+) Fehlgriffe")

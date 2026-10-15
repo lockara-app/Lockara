@@ -13,12 +13,12 @@
 cd "$(dirname "$0")/../.." || exit 1
 
 LOG="test_log.txt"
-APP="dist/SmartSearch.app/Contents/MacOS/SmartSearch"
+APP="dist/Lockara.app/Contents/MacOS/Lockara"
 
 exec > >(tee "$LOG") 2>&1
 
 echo "=========================================="
-echo " SmartSearch - Funktionstest des Bundles"
+echo " Lockara - Funktionstest des Bundles"
 echo " $(date '+%d.%m.%Y %H:%M:%S')"
 echo "=========================================="
 echo
@@ -30,7 +30,7 @@ if [ ! -f "$APP" ]; then
 fi
 
 echo "Signatur:"
-codesign --verify --verbose=2 "dist/SmartSearch.app" 2>&1 | sed 's/^/  /'
+codesign --verify --verbose=2 "dist/Lockara.app" 2>&1 | sed 's/^/  /'
 echo
 
 echo "------------------------------------------"
