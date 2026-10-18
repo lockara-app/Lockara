@@ -46,7 +46,6 @@ import base64
 import datetime
 import json
 import os
-import shutil
 from dataclasses import dataclass, field
 
 from lockara.kern.pfade import DATEN_ORDNER, ressource
@@ -190,7 +189,11 @@ def installieren(quelle):
     ergebnis = pruefen(inhalt)
     if ergebnis.art in ("gueltig", "kulanz", "abgelaufen"):
         os.makedirs(DATEN_ORDNER, exist_ok=True)
+        # Genau die geprueften Bytes schreiben, nicht die Quelle ein zweites
+        # Mal kopieren - sonst koennte zwischen Pruefen und Kopieren eine
+        # andere Datei an ihrer Stelle liegen.
         ziel_tmp = LIZENZ_DATEI + ".tmp"
-        shutil.copyfile(quelle, ziel_tmp)
+        with open(ziel_tmp, "wb") as f:
+            f.write(inhalt)
         os.replace(ziel_tmp, LIZENZ_DATEI)
     return ergebnis

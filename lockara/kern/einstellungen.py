@@ -12,16 +12,63 @@ import os
 
 from lockara.kern.pfade import CONFIG_FILE, FAVORITEN_FILE, VERLAUF_FILE
 
-def lade_config():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as f:
+
+def _json_schreiben(pfad, daten):
+    """Schreibt eine JSON-Datei atomar: erst in eine temporaere Datei, dann
+    per os.replace() an ihren Platz - wie speichere_index() in index.py.
+
+    Vorher wurde direkt in die Datei geschrieben. Stuerzt das Programm
+    genau dabei ab (oder geht der Akku leer), bleibt eine halbe config.json
+    liegen - und lade_config() scheiterte beim naechsten Start daran: die
+    App liess sich nicht mehr oeffnen, bis jemand die Datei von Hand
+    loeschte.
+
+    Umlaute werden weiter als \\u-Folgen geschrieben (ensure_ascii): so
+    liest auch eine aeltere Fassung die Datei, die unter Windows noch ohne
+    Angabe der Codierung oeffnet - wichtig fuer ein Zurueckrollen.
+    """
+    temp_pfad = pfad + ".tmp"
+    with open(temp_pfad, "w", encoding="utf-8") as f:
+        json.dump(daten, f, indent=2)
+    os.replace(temp_pfad, pfad)
+
+
+def _json_lesen(pfad, ersatz):
+    """Liest eine JSON-Datei. Fehlt sie, kommt 'ersatz' zurueck. Ist sie
+    kaputt, wird sie als <name>.defekt beiseitegelegt (nicht geloescht -
+    vielleicht will jemand nachsehen) und ebenfalls 'ersatz' geliefert.
+    Eine unlesbare Einstellungsdatei darf den Programmstart nie verhindern.
+
+    Immer als UTF-8: unter Windows naehme open() sonst die Systemcodierung
+    (cp1252), und eine von Hand bearbeitete Datei mit Umlauten kaeme
+    verstuemmelt zurueck."""
+    if not os.path.exists(pfad):
+        return ersatz
+    try:
+        with open(pfad, encoding="utf-8") as f:
             return json.load(f)
-    return {"ordner": []}
+    except (ValueError, UnicodeDecodeError) as e:
+        print(f"[Warnung] {os.path.basename(pfad)} ist beschaedigt und wird ersetzt: {e}")
+        try:
+            os.replace(pfad, pfad + ".defekt")
+        except OSError:
+            pass
+        return ersatz
+
+
+def lade_config():
+    config = _json_lesen(CONFIG_FILE, {})
+    if not isinstance(config, dict):
+        config = {}
+    # "ordner" muss immer eine Liste sein - ordner.py und
+    # importiere_konfiguration() greifen ohne weitere Pruefung darauf zu.
+    if not isinstance(config.get("ordner"), list):
+        config["ordner"] = []
+    return config
 
 
 def speichere_config(config):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f, indent=2)
+    _json_schreiben(CONFIG_FILE, config)
 
 
 def automatische_updatepruefung():
@@ -53,20 +100,19 @@ def ueberwachte_ordner():
 
 def lade_favoriten():
     """Gibt die Menge der als Favorit markierten Dateipfade zurück."""
-    if os.path.exists(FAVORITEN_FILE):
-        try:
-            with open(FAVORITEN_FILE, "r") as f:
-                return set(json.load(f))
-        except Exception as e:
-            print(f"[Warnung] Favoriten konnten nicht geladen werden: {e}")
-            return set()
-    return set()
+    try:
+        favoriten = _json_lesen(FAVORITEN_FILE, [])
+    except Exception as e:
+        print(f"[Warnung] Favoriten konnten nicht geladen werden: {e}")
+        return set()
+    if not isinstance(favoriten, list):
+        return set()
+    return {p for p in favoriten if isinstance(p, str)}
 
 
 def speichere_favoriten(favoriten):
     try:
-        with open(FAVORITEN_FILE, "w") as f:
-            json.dump(sorted(favoriten), f, indent=2)
+        _json_schreiben(FAVORITEN_FILE, sorted(favoriten))
     except Exception as e:
         print(f"[Warnung] Favoriten konnten nicht gespeichert werden: {e}")
 
@@ -94,19 +140,18 @@ MAX_VERLAUF = 20
 
 def lade_verlauf():
     """Die letzten Suchanfragen, neueste zuerst."""
-    if os.path.exists(VERLAUF_FILE):
-        try:
-            with open(VERLAUF_FILE, "r") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+    try:
+        verlauf = _json_lesen(VERLAUF_FILE, [])
+    except Exception:
+        return []
+    if not isinstance(verlauf, list):
+        return []
+    return [v for v in verlauf if isinstance(v, str)][:MAX_VERLAUF]
 
 
 def speichere_verlauf(verlauf):
     try:
-        with open(VERLAUF_FILE, "w") as f:
-            json.dump(verlauf, f, indent=2)
+        _json_schreiben(VERLAUF_FILE, verlauf)
     except Exception:
         pass
 

@@ -217,7 +217,6 @@ def ausschnitt_mit_fundstellen(text, such_woerter, laenge=170):
 
     if erste is None or len(text) <= laenge:
         ausschnitt = text[:laenge]
-        versatz = 0
         if len(text) > laenge:
             ausschnitt = ausschnitt.rsplit(" ", 1)[0] + " …"
     else:
@@ -233,9 +232,6 @@ def ausschnitt_mit_fundstellen(text, such_woerter, laenge=170):
             ausschnitt = ausschnitt.rsplit(" ", 1)[0] + " …"
         if start > 0:
             ausschnitt = "… " + ausschnitt
-            versatz = start - 2
-        else:
-            versatz = start
 
     # Alle Vorkommen im fertigen Ausschnitt einsammeln.
     stellen = _fundstellen(ausschnitt.lower(), such_woerter)

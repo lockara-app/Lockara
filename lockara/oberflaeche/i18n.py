@@ -160,7 +160,7 @@ TRANSLATIONS = {
         "errors.dialog_reason": "Das ist meist kein Fehler. Häufig handelt es sich um reine Bilddateien —\nein eingescanntes Foto oder eine Grafik enthält keinen Text, der sich\ndurchsuchen ließe.\n\nSeltenere Ursachen: ein beschädigtes PDF, ein abgebrochener Download,\noder ein Ordner, für den macOS den Zugriff verweigert.",
         "errors.retry_button": "Bei der nächsten Indexierung erneut versuchen",
         "errors.close_button": "Schließen",
-        "errors.retry_status": "{anzahl} Dateien werden bei der nächsten Indexierung erneut gelesen",
+        "errors.retry_status": "{anzahl} Dateien werden jetzt erneut gelesen",
 
         # Suche
         "search.status_searching": "Suche läuft",
@@ -431,7 +431,7 @@ TRANSLATIONS = {
         "errors.dialog_reason": "This is usually not an error. Most often these are pure image files —\na scanned photo or a graphic contains no text that could be searched.\n\nRarer causes: a damaged PDF, an incomplete download, or a folder for\nwhich macOS denies access.",
         "errors.retry_button": "Retry during the next indexing run",
         "errors.close_button": "Close",
-        "errors.retry_status": "{anzahl} files will be read again during the next indexing run",
+        "errors.retry_status": "{anzahl} files are being read again now",
 
         # Search
         "search.status_searching": "Searching",

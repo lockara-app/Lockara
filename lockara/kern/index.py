@@ -326,7 +326,7 @@ def bereinige_index():
     return len(eintraege) - len(uebrig)
 
 
-_such_cache = None                  # (kennung, eintraege, matrix)
+_such_cache = None                  # (kennung, eintraege, matrix, texte)
 _such_cache_lock = threading.Lock()
 
 # Oberhalb dieser Groesse wird der Index NICHT im Arbeitsspeicher
@@ -335,8 +335,15 @@ _such_cache_lock = threading.Lock()
 CACHE_OBERGRENZE_BYTES = 1_500_000_000
 
 
-def index_mit_matrix():
+def index_mit_matrix(mit_texten=False):
     """Gibt (eintraege, matrix) zurueck - den Index im Arbeitsspeicher.
+
+    mit_texten=True liefert als Drittes {Pfad: gesamter Text der Datei,
+    klein geschrieben} - fuer die Stichwortwertung der Suche. Vorher setzte
+    JEDE Suche diesen Text fuer JEDES Dokument neu zusammen und schrieb ihn
+    klein; bei einem Index mit einigen tausend Dokumenten war das der
+    groesste Posten der ersten Stufe. Jetzt geschieht es einmal je
+    Indexstand.
 
     WARUM: Vorher las JEDE Suche die komplette index.pkl neu von der
     Platte und rechnete das Skalarprodukt anschliessend in einer
@@ -359,21 +366,24 @@ def index_mit_matrix():
     global _such_cache
     import numpy as np
 
+    def _ergebnis(eintraege, matrix, texte):
+        return (eintraege, matrix, texte) if mit_texten else (eintraege, matrix)
+
     try:
         angaben = os.stat(INDEX_FILE)
         kennung = (angaben.st_mtime_ns, angaben.st_size)
     except OSError:
-        return [], None
+        return _ergebnis([], None, {})
 
     with _such_cache_lock:
         if _such_cache is not None and _such_cache[0] == kennung:
-            return _such_cache[1], _such_cache[2]
+            return _ergebnis(*_such_cache[1:])
 
         eintraege, passend = _index_datei_lesen()
         if not passend:
             # Fremder Index: lieber keine Treffer als falsche. Der naechste
             # Indexlauf baut ihn neu auf.
-            return [], None
+            return _ergebnis([], None, {})
 
         # Eintraege ohne Vektor (z.B. Dateien, die beim Indexieren nicht
         # gelesen werden konnten) lassen sich nicht durchsuchen.
@@ -390,9 +400,14 @@ def index_mit_matrix():
                 print(f"[Suche] Vektormatrix nicht baubar: {e}")
                 matrix = None
 
+        teile = {}
+        for e in eintraege:
+            teile.setdefault(e["datei"], []).append(e.get("text", ""))
+        texte = {pfad: " ".join(liste).lower() for pfad, liste in teile.items()}
+
         if angaben.st_size <= CACHE_OBERGRENZE_BYTES:
-            _such_cache = (kennung, eintraege, matrix)
+            _such_cache = (kennung, eintraege, matrix, texte)
         else:
             _such_cache = None
 
-        return eintraege, matrix
+        return _ergebnis(eintraege, matrix, texte)
