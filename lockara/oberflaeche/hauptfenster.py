@@ -900,7 +900,12 @@ class Hauptfenster(ctk.CTk):
 
     def _automatische_reindexierung_main_thread(self):
         if self.indexierung_laeuft or self.indexierung_lock.locked():
-            # Läuft schon (z.B. durch manuellen Klick) - nicht erneut anstoßen.
+            # Laeuft schon (z.B. durch manuellen Klick). Nicht parallel
+            # starten - aber merken und gleich danach einen Lauf anhaengen.
+            # Frueher wurde die Meldung hier verworfen: wer waehrend einer
+            # langen Indexierung eine Datei speicherte, fand sie danach
+            # nicht, bis zufaellig wieder etwas im Ordner passierte.
+            self._nachlauf_noetig = True
             return
         self.setze_status(t("status.autoreindex_started"))
         self.index_aktualisieren()
@@ -999,12 +1004,16 @@ class Hauptfenster(ctk.CTk):
         self.suchfeld.insert(0, t("similar.query_prefix", name=os.path.basename(pfad)))
         self._suche_button_sperren()
         self.setze_status(t("similar.status_searching"))
-        threading.Thread(target=self._aehnliche_bg, args=(pfad,), daemon=True).start()
+        # Eigene Suchnummer wie in suchen(): sonst ueberschreibt die noch
+        # laufende Nachsortierung einer vorherigen Suche ein paar Sekunden
+        # spaeter die aehnlichen Dokumente.
+        self._such_nummer = getattr(self, "_such_nummer", 0) + 1
+        threading.Thread(target=self._aehnliche_bg, args=(pfad, self._such_nummer), daemon=True).start()
 
-    def _aehnliche_bg(self, pfad):
+    def _aehnliche_bg(self, pfad, nummer):
         try:
             treffer = suche.aehnliche_dateien(pfad, top_n=15)
-            self.after(0, self._zeige_aehnliche_treffer, treffer)
+            self.after(0, self._zeige_aehnliche_treffer, treffer, nummer)
         except Exception as e:
             # e=e als Default-Argument "einfrieren": Python löscht die
             # except-Variable automatisch am Blockende, die Lambda würde
@@ -1012,7 +1021,9 @@ class Hauptfenster(ctk.CTk):
             # auf ein bereits verschwundenes 'e' treffen -> NameError.
             self.after(0, lambda e=e: self._suche_fehlgeschlagen(e))
 
-    def _zeige_aehnliche_treffer(self, treffer):
+    def _zeige_aehnliche_treffer(self, treffer, nummer=None):
+        if nummer is not None and nummer != getattr(self, "_such_nummer", nummer):
+            return   # inzwischen wurde neu gesucht
         self._suche_button_entsperren()
         if treffer is None:
             self.setze_status(t("similar.status_no_vector"))
@@ -1379,6 +1390,7 @@ class Hauptfenster(ctk.CTk):
     def _index_dialog_fehler(self, dialog, fehler):
         """Modell-Fehler zeigen einen eigenen Dialog (dialoge/meldungen.py).
         Vorher Knoepfe freigeben und Fortschritt ausblenden."""
+        self._nachlauf_noetig = False
         self._buttons_entsperren()
         self.verstecke_fortschritt()
         dialog(self, fehler)
@@ -1389,12 +1401,24 @@ class Hauptfenster(ctk.CTk):
         self.setze_status(t("index.status_done"))
         plattform.benachrichtigung(t("index.notification_title"), t("index.notification_body"))
         self.aktualisiere_fehler_anzeige()
+        self._nachlauf_starten()
 
     def _index_abgebrochen(self):
+        # Wer abbricht, will keinen Nachlauf - auch nicht einen, den die
+        # Ordnerueberwachung inzwischen vorgemerkt hat.
+        self._nachlauf_noetig = False
         self._buttons_entsperren()
         self.verstecke_fortschritt()
         self.setze_status(t("index.status_cancelled"))
         self.aktualisiere_fehler_anzeige()
+
+    def _nachlauf_starten(self):
+        """Hat sich waehrend des Laufs etwas in den Ordnern geaendert (siehe
+        _automatische_reindexierung_main_thread), gleich noch einmal - der
+        Lauf liest dabei nur die geaenderten Dateien, ist also kurz."""
+        if getattr(self, "_nachlauf_noetig", False):
+            self._nachlauf_noetig = False
+            self.after(500, self._automatische_reindexierung_main_thread)
 
     # ---------- FEHLERSICHTBARKEIT (nicht lesbare Dateien) ----------
 
@@ -1403,7 +1427,24 @@ class Hauptfenster(ctk.CTk):
         die beim Indexieren nicht gelesen werden konnten. Vorher landeten
         solche Fehler nur im Terminal und wurden z.B. bei laufendem
         Autostart im Hintergrund nie bemerkt."""
-        anzahl = len(index.fehlgeschlagene_dateien())
+        # Gezaehlt wird im Hintergrund: dafuer muss die komplette index.pkl
+        # gelesen werden. Frueher geschah das im Hauptthread - beim Start
+        # und nach jedem Indexlauf stand das Fenster bei einem grossen
+        # Index sekundenlang still.
+        def _zaehlen():
+            try:
+                anzahl = len(index.fehlgeschlagene_dateien())
+            except Exception as e:
+                print(f"[Index] Nicht lesbare Dateien nicht zaehlbar: {e}")
+                return
+            try:
+                self.after(0, self._fehler_anzeige_setzen, anzahl)
+            except Exception:
+                pass   # Fenster schon geschlossen
+
+        threading.Thread(target=_zaehlen, daemon=True).start()
+
+    def _fehler_anzeige_setzen(self, anzahl):
         if anzahl > 0:
             self.btn_fehler_anzeigen.configure(text=t("sidebar.errors_button", anzahl=anzahl))
             # Direkt unter "Index aktualisieren" einsortiert (after=
@@ -1417,6 +1458,7 @@ class Hauptfenster(ctk.CTk):
         fehlerliste.zeigen(self)
 
     def _index_fehlgeschlagen(self, fehler):
+        self._nachlauf_noetig = False   # derselbe Fehler kaeme gleich wieder
         self._buttons_entsperren()
         self.verstecke_fortschritt()
         self.setze_status(t("index.status_error", fehler=fehler))

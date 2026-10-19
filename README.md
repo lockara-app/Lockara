@@ -39,6 +39,7 @@ Immer im Projektordner:
 | Programm | `venv/bin/python -m lockara` | `venv\Scripts\python -m lockara` |
 | Wortformen-Test (1 Sekunde) | `venv/bin/python -m tests.test_wortformen` | `venv\Scripts\python -m tests.test_wortformen` |
 | Begriffsliste-Test (1 Sekunde) | `venv/bin/python -m tests.test_begriffe` | `venv\Scripts\python -m tests.test_begriffe` |
+| Robustheitstest (1 Sekunde) | `venv/bin/python -m tests.test_robustheit` | `venv\Scripts\python -m tests.test_robustheit` |
 | Rolltest (1 Sekunde) | `venv/bin/python -m tests.test_rollen` | `venv\Scripts\python -m tests.test_rollen` |
 | Suchqualität messen | `venv/bin/python -m werkzeuge.such_diagnose --testdokumente` | `venv\Scripts\python -m werkzeuge.such_diagnose --testdokumente` |
 | Testdokumente neu erzeugen | `venv/bin/python -m werkzeuge.testdokumente` | `venv\Scripts\python -m werkzeuge.testdokumente` |
@@ -123,7 +124,7 @@ Bei den gemeinsamen Dateien vorher kurz absprechen, wer woran sitzt.
 
 Jeder Pull Request wird auf GitHub automatisch geprüft (`.github/workflows/tests.yml`, sichtbar unter „Checks“):
 
-- **Schnelltests** auf Mac, Windows und Linux: Pakete installieren, alle Dateien übersetzen, Wortformen- und Lizenz-Test.
+- **Schnelltests** auf Mac, Windows und Linux: Pakete installieren, alle Dateien übersetzen, Wortformen-, Lizenz-, Begriffsliste-, Roll- und Robustheitstest.
 - **Suchqualität** unter Linux: die Suchdiagnose mit den 50 Testdokumenten. Fällt das Ergebnis unter die Werte in `tests/mindestwerte.json`, wird der Pull Request rot. Lokal: `venv/bin/python -m werkzeuge.ci_pruefen`.
 
 Wird die Suche besser, die Werte in `tests/mindestwerte.json` nachziehen.

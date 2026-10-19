@@ -334,7 +334,10 @@ def benachrichtigung(titel, text):
         def escape(s):
             return s.replace("\\", "\\\\").replace('"', '\\"')
         script = f'display notification "{escape(text)}" with title "{escape(titel)}"'
-        subprocess.run(["osascript", "-e", script], check=False)
+        # Im Hintergrund starten statt darauf zu warten: osascript braucht
+        # gern eine halbe Sekunde, und aufgerufen wird das im Tk-Hauptthread
+        # (nach jedem Indexlauf) - das Fenster stand so lange still.
+        _still_ausfuehren(["osascript", "-e", script])
     except Exception as e:
         print(f"[Benachrichtigung fehlgeschlagen] {e}")
 

@@ -44,10 +44,20 @@ def zeigen(app):
         ctk.CTkLabel(scroll, text=pfad, font=("Helvetica", 10), anchor="w", justify="left").pack(fill="x", pady=1)
 
     def neuversuch():
+        # Nicht waehrend eines Laufs: der schreibt seinen eigenen Stand des
+        # Index und wuerde das Entfernen der Markierungen gleich wieder
+        # ueberschreiben.
+        if app.indexierung_laeuft:
+            app.setze_status(t("index.status_already_running"))
+            return
         entfernt = index.entferne_fehlgeschlagene_markierung()
         top.destroy()
-        app.setze_status(t("errors.retry_status", anzahl=entfernt))
         app.aktualisiere_fehler_anzeige()
+        # Gleich neu lesen, statt bis zum naechsten Lauf zu warten - wer
+        # hier klickt, will das Ergebnis jetzt sehen.
+        if entfernt:
+            app.index_aktualisieren()
+        app.setze_status(t("errors.retry_status", anzahl=entfernt))
 
     btn_retry = ctk.CTkButton(
         top, text=t("errors.retry_button"),

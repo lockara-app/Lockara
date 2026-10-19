@@ -1,6 +1,6 @@
 # Aufbau von Lockara
 
-Stand: 27.09.2026, Fassung 1.0.6.
+Stand: 18.10.2026, Fassung 1.1.0.
 
 ## Die drei Schichten
 
@@ -55,5 +55,12 @@ Lockara stand kurz davor: `gui.py` hatte 3.000 Zeilen in **einer** Klasse. Darin
 ## Bekannte Baustellen
 
 - `oberflaeche/hauptfenster.py` hat noch rund 1.500 Zeilen: Aufbau des Fensters, Seitenleiste, Suche, Fensterverhalten. Sie wird beim Umstieg auf PySide6 ohnehin neu geschrieben und dabei in Fenster und Seitenleiste aufgeteilt. Vorher lohnt sich das Zerlegen nicht.
-- Der Suchverlauf wird gespeichert, aber nirgends angezeigt. Das frühere Auswahlmenü ist bei einem Umbau verloren gegangen.
-- Die Restzeit-Angabe („Min“, „Std“) ist noch nicht übersetzt.
+
+## Regeln für Dateien im Datenordner
+
+- **Immer atomar schreiben:** erst in `<datei>.tmp`, dann `os.replace()`. So bleibt bei einem Absturz mitten im Schreiben nie eine halbe Datei liegen (`kern/einstellungen.py`, `kern/index.py`).
+- **Eine Datei kommt nur ganz in den Index:** mit allen Abschnitten samt Vektor oder als „ohne Inhalt“ (`indexierung._zwischenstand`). Sonst gilt eine halb eingelesene Datei beim nächsten Lauf als erledigt.
+- **Kaputte Einstellungen verhindern nie den Start:** `lade_config()` legt eine unlesbare Datei als `.defekt` beiseite und macht mit leeren Einstellungen weiter.
+- **Den Index nie im Tk-Hauptthread lesen:** er kann mehrere hundert MB groß sein. Ergebnisse gehen über `self.after(0, …)` zurück ins Fenster.
+
+Geprüft wird das in `tests/test_robustheit.py`.

@@ -13,7 +13,7 @@ import os
 import time
 
 from lockara.kern.pfade import INDEX_FILE
-from lockara.kern.index import gueltige_paare, index_mit_matrix, nur_gueltige_eintraege
+from lockara.kern.index import gueltige_paare, index_mit_matrix
 from lockara.kern import nachsortierung
 from lockara.kern.modell import geladenes_modell
 from lockara.kern.begriffe import anfrage_fuer_modell, wort_oder_begriff_trifft
@@ -138,7 +138,7 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None,
     # index_mit_matrix(). Jeder Eintrag behaelt seine Position im
     # Gesamtindex, weil darueber gleich der fertig berechnete
     # Aehnlichkeitswert abgegriffen wird.
-    alle_eintraege, matrix = index_mit_matrix()
+    alle_eintraege, matrix, texte_klein = index_mit_matrix(mit_texten=True)
     if not alle_eintraege:
         return []
 
@@ -209,7 +209,10 @@ def suche_intern(anfrage, top_n=10, ausgeschlossene_typen=None, zeitraum=None,
         bester_semantik, bester_abschnitt = max(werte_je_abschnitt, key=lambda x: x[0])
 
         dateiname = os.path.basename(pfad).lower()
-        gesamttext = " ".join(e.get("text", "") for _, e in abschnitte).lower()
+        # Einmal je Indexstand zusammengesetzt, siehe index_mit_matrix().
+        gesamttext = texte_klein.get(pfad)
+        if gesamttext is None:
+            gesamttext = " ".join(e.get("text", "") for _, e in abschnitte).lower()
 
         gefundene_woerter = 0
         im_dateinamen = 0
@@ -370,24 +373,36 @@ def aehnliche_dateien(pfad, top_n=10):
 
     pfad = os.path.abspath(os.path.expanduser(pfad))
 
-    # Denselben Arbeitsspeicher-Index benutzen wie die Suche.
-    eintraege, _ = index_mit_matrix()
-    eintraege = nur_gueltige_eintraege(eintraege)
+    # Denselben Arbeitsspeicher-Index benutzen wie die Suche - samt
+    # Vektormatrix: EINE Matrixmultiplikation statt eines np.dot() je
+    # Textabschnitt (vorher hier noch als Python-Schleife).
+    alle_eintraege, matrix = index_mit_matrix()
+    paare = gueltige_paare(list(enumerate(alle_eintraege)))
 
-    eigene_vektoren = [e["vektor"] for e in eintraege if e["datei"] == pfad]
-    if not eigene_vektoren:
+    eigene = [i for i, e in paare if e["datei"] == pfad]
+    if not eigene:
         return None
 
     # Bei mehreren Textabschnitten derselben Datei: Durchschnittsvektor als
     # Repräsentation der ganzen Datei verwenden.
-    referenz_vektor = np.mean(eigene_vektoren, axis=0)
-    referenz_vektor = referenz_vektor / np.linalg.norm(referenz_vektor)
+    if matrix is not None:
+        referenz_vektor = matrix[eigene].mean(axis=0)
+    else:
+        referenz_vektor = np.mean([alle_eintraege[i]["vektor"] for i in eigene], axis=0)
+    laenge = np.linalg.norm(referenz_vektor)
+    if not laenge:
+        return None
+    referenz_vektor = referenz_vektor / laenge
 
+    alle_werte = matrix @ referenz_vektor if matrix is not None else None
     rohe_treffer = []
-    for e in eintraege:
+    for i, e in paare:
         if e["datei"] == pfad:
             continue  # Datei nicht mit sich selbst vergleichen
-        score = float(np.dot(referenz_vektor, e["vektor"]))
+        if alle_werte is not None:
+            score = float(alle_werte[i])
+        else:
+            score = float(np.dot(referenz_vektor, e["vektor"]))
         rohe_treffer.append((score, e))
 
     rohe_treffer.sort(key=lambda x: x[0], reverse=True)

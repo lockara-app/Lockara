@@ -60,6 +60,9 @@ jobs:
       - name: Rolltest
         run: python -m tests.test_rollen
 
+      - name: Robustheitstest
+        run: python -m tests.test_robustheit
+
   suchqualitaet:
     name: Suchqualitaet (Linux)
     runs-on: ubuntu-latest

@@ -26,7 +26,67 @@ from lockara.kern.modell import geladenes_modell
 LESE_THREADS = 4
 
 
-def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
+def _geaendert_am(pfad):
+    """Zeitstempel der letzten Aenderung - oder None, wenn die Datei
+    inzwischen weg ist.
+
+    Zwischen dem Durchsuchen des Ordners und dem Einlesen vergehen bei
+    grossen Ordnern Minuten. Wird in der Zeit eine Datei geloescht oder
+    verschoben (ein Download, der umbenannt wird, eine Word-Sicherung),
+    warf os.path.getmtime() einen Fehler - und brach den GESAMTEN Indexlauf
+    ab, mit "Fehler bei der Indexierung" in der Statuszeile."""
+    try:
+        return os.path.getmtime(pfad)
+    except OSError:
+        return None
+
+
+def _muss_gelesen_werden(pfad, bekannt, gelesen_mit):
+    if pfad not in bekannt or gelesen_mit.get(pfad, 1) < leser_stand(pfad):
+        return True
+    geaendert = _geaendert_am(pfad)
+    return geaendert is not None and geaendert > bekannt[pfad]
+
+
+def _zwischenstand(neue_eintraege, alte_eintraege):
+    """Die Eintraege, die jetzt schon in den Index duerfen.
+
+    Eine Datei kommt nur GANZ hinein - mit allen Abschnitten samt Vektor
+    oder als "ohne Inhalt". Frueher wurde abschnittsweise gespeichert: Wurde
+    das Programm zwischen zwei Zwischenspeicherungen beendet, stand eine
+    Datei mit der Haelfte ihrer Abschnitte im Index, galt beim naechsten Lauf
+    als erledigt (der Zeitstempel stimmte ja) und blieb fuer immer nur halb
+    durchsuchbar.
+
+    Fuer Dateien, die noch nicht fertig sind, bleiben die alten Eintraege
+    stehen. Sie tragen den alten Zeitstempel, also liest der naechste Lauf
+    die Datei ohnehin neu, falls dieser hier nicht zu Ende kommt.
+    """
+    unfertig = {e["datei"] for e in neue_eintraege
+                if not e.get("ohne_inhalt") and "vektor" not in e}
+    fertig = [e for e in neue_eintraege if e["datei"] not in unfertig]
+    fertige_dateien = {e["datei"] for e in fertig}
+    noch_alt = [e for pfad, liste in alte_eintraege.items()
+                if pfad not in fertige_dateien for e in liste]
+    return fertig + noch_alt
+
+
+def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None,
+                       soll_abbrechen=None, dateien=None, geplant_fn=None):
+    """Bringt den Index fuer EINEN Ordner auf den neuesten Stand.
+
+    soll_abbrechen: wie bei alles_indexieren(). Wird jetzt auch MITTEN im
+    Ordner abgefragt - vorher erst zwischen zwei Ordnern. Wer einen
+    einzigen grossen Ordner eingetragen hatte (der Normalfall), konnte den
+    Lauf mit "Abbrechen" also gar nicht anhalten. Was bis dahin fertig
+    ist, bleibt im Index; der Rest kommt beim naechsten Lauf.
+    dateien: die Dateien des Ordners, wenn der Aufrufer sie schon kennt -
+    alles_indexieren() hat sie zum Zaehlen ohnehin gesammelt, und ein
+    zweites Durchsuchen grosser Ordner kostet spuerbar Zeit.
+    geplant_fn(anzahl): erfaehrt vorab, wie viele Dateien wirklich gelesen
+    werden - fuer eine ehrliche Fortschrittsanzeige (siehe alles_indexieren).
+    """
+    soll_abbrechen = soll_abbrechen or (lambda: False)
     ordner = os.path.abspath(os.path.expanduser(ordner))
     alle_eintraege = lade_bestehenden_index()
 
@@ -38,10 +98,24 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
     # LESER_STAND in dateien.py). Eintraege von vor dieser Angabe gelten
     # als Stand 1.
     gelesen_mit = {e["datei"]: e.get("leser", 1) for e in eintraege_dieser_ordner}
-    aktuelle_dateien = set(dateien_im_ordner(ordner))
-    zu_verarbeiten = [p for p in aktuelle_dateien
-                      if p not in bekannt or os.path.getmtime(p) > bekannt[p]
-                      or gelesen_mit.get(p, 1) < leser_stand(p)]
+    aktuelle_dateien = set(dateien if dateien is not None else dateien_im_ordner(ordner))
+    # Als Menge, nicht als Liste: unten wird fuer JEDEN bekannten Eintrag
+    # nachgesehen, ob seine Datei dazugehoert. Mit einer Liste waechst das
+    # quadratisch - bei 20.000 Abschnitten und 2.000 geaenderten Dateien
+    # sind das 40 Millionen Vergleiche, bevor ueberhaupt gelesen wird.
+    zu_verarbeiten = {p for p in aktuelle_dateien
+                      if _muss_gelesen_werden(p, bekannt, gelesen_mit)}
+    if geplant_fn:
+        geplant_fn(len(zu_verarbeiten))
+
+    # Die bisherigen Eintraege der Dateien, die gleich neu gelesen werden.
+    # Sie bleiben bis zum Ende des Laufs im Index stehen (siehe
+    # _zwischenstand) - sonst waere eine geaenderte Datei waehrend des
+    # Laufs gar nicht auffindbar, und nach einem Abbruch bliebe sie es.
+    alte_eintraege = {}
+    for e in eintraege_dieser_ordner:
+        if e["datei"] in zu_verarbeiten:
+            alte_eintraege.setdefault(e["datei"], []).append(e)
 
     eintraege_dieser_ordner = [
         e for e in eintraege_dieser_ordner
@@ -59,13 +133,27 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
     neue_eintraege = []
 
     def _datei_verarbeiten(pfad):
-        geaendert = os.path.getmtime(pfad)
-        text = lies_datei(pfad)
+        if soll_abbrechen():
+            return pfad, None, None
+        geaendert = _geaendert_am(pfad)
+        text = lies_datei(pfad) if geaendert is not None else None
         return pfad, geaendert, text
 
+    abgebrochen = False
     fertig_zaehler = 0
+    # Sortiert, damit ein Lauf reproduzierbar dieselbe Reihenfolge nimmt.
     with ThreadPoolExecutor(max_workers=LESE_THREADS) as pool:
-        for pfad, geaendert, text in pool.map(_datei_verarbeiten, zu_verarbeiten):
+        for pfad, geaendert, text in pool.map(_datei_verarbeiten, sorted(zu_verarbeiten)):
+            if soll_abbrechen():
+                # Die restlichen Auftraege im Pool kehren sofort zurueck
+                # (siehe _datei_verarbeiten), das Warten darauf kostet nichts.
+                abgebrochen = True
+                continue
+            if geaendert is None:
+                # Inzwischen geloescht oder verschoben - nichts aufzunehmen,
+                # und die alten Eintraege gelten auch nicht mehr.
+                alte_eintraege.pop(pfad, None)
+                continue
             fertig_zaehler += 1
             if fortschritt_fn:
                 fortschritt_fn(fertig_zaehler, os.path.basename(pfad))
@@ -119,13 +207,16 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
     SPEICHER_INTERVALL = 3
     BATCH_GROESSE = 16
     zu_kodierende = [e for e in neue_eintraege if e.get("text_fuer_analyse")]
-    if zu_kodierende:
+    if zu_kodierende and not abgebrochen:
         gesamt_batches = math.ceil(len(zu_kodierende) / BATCH_GROESSE)
         for batch_start in range(0, len(zu_kodierende), BATCH_GROESSE):
+            if soll_abbrechen():
+                abgebrochen = True
+                break
             batch = zu_kodierende[batch_start:batch_start + BATCH_GROESSE]
             texte = [e["text_fuer_analyse"] for e in batch]
             vektoren = modell.encode(texte, show_progress_bar=False, normalize_embeddings=True)
-            for e, v in zip(batch, vektoren):
+            for e, v in zip(batch, vektoren, strict=True):
                 e["vektor"] = v
                 del e["text_fuer_analyse"]
 
@@ -140,18 +231,14 @@ def aktualisiere_index(ordner, modell=None, still=False, fortschritt_fn=None):
 
             ist_letzter_batch = aktueller_batch == gesamt_batches
             if aktueller_batch % SPEICHER_INTERVALL == 0 or ist_letzter_batch:
-                fertige_eintraege = [
-                    e for e in neue_eintraege
-                    if "vektor" in e or e.get("ohne_inhalt")
-                ]
-                zwischenstand = andere_eintraege + eintraege_dieser_ordner + fertige_eintraege
-                speichere_index(zwischenstand)
+                speichere_index(andere_eintraege + eintraege_dieser_ordner
+                                + _zwischenstand(neue_eintraege, alte_eintraege))
 
-    for e in neue_eintraege:
+    # Bei einem Abbruch bleiben halb fertige Dateien mit ihrem alten Stand
+    # stehen (siehe _zwischenstand); ohne Abbruch ist hier alles fertig.
+    gesamt = andere_eintraege + eintraege_dieser_ordner + _zwischenstand(neue_eintraege, alte_eintraege)
+    for e in gesamt:
         e.pop("text_fuer_analyse", None)
-
-    eintraege_dieser_ordner.extend(neue_eintraege)
-    gesamt = andere_eintraege + eintraege_dieser_ordner
     speichere_index(gesamt)
 
     return gesamt
@@ -161,7 +248,7 @@ def alles_indexieren(ordner_liste, soll_abbrechen, melden):
     """Der komplette Indexlauf ueber alle ueberwachten Ordner.
 
     soll_abbrechen()  -> True, sobald der Nutzer abbrechen will. Wird
-                         zwischen zwei Ordnern abgefragt.
+                         zwischen zwei Dateien abgefragt.
     melden(ereignis)  -> bekommt den Fortschritt als Woerterbuch:
 
         {"art": "datei", "anteil": 0..1, "n": 3, "gesamt": 120, "name": "...",
@@ -182,20 +269,27 @@ def alles_indexieren(ordner_liste, soll_abbrechen, melden):
     # mehr, der gemeldet werden muesste (siehe kern/modell.py).
     modell = geladenes_modell()
 
-    # Gesamtzahl vorab zaehlen, fuer einen korrekten Prozentwert ueber alle
-    # Ordner hinweg.
-    alle_dateien = []
-    for o in ordner_liste:
-        if os.path.exists(o):
-            alle_dateien.extend(dateien_im_ordner(o))
+    # Jeden Ordner EINMAL durchsuchen. Die Liste geht an
+    # aktualisiere_index() weiter, das vorher jeden Ordner ein zweites Mal
+    # durchsucht hat - bei einem grossen Netzlaufwerk eine Minute und mehr.
+    ordner_liste = [os.path.abspath(os.path.expanduser(o)) for o in ordner_liste]
+    dateien_je_ordner = {o: dateien_im_ordner(o) for o in ordner_liste if os.path.exists(o)}
 
-    gesamt = len(alle_dateien)
-    if gesamt == 0:
-        return True
-
-    zaehler = {"n": 0}
+    # Fortschritt: gezaehlt werden nur die Dateien, die wirklich gelesen
+    # werden. Frueher stand hier die Zahl ALLER Dateien - nach einer
+    # einzigen geaenderten Datei hiess es dann "Indexiere 1 von 12.000,
+    # noch etwa 3 Std", und der Balken blieb fast leer, obwohl der Lauf
+    # Sekunden spaeter fertig war. Fuer den Ordner, der gerade dran ist,
+    # meldet aktualisiere_index() die echte Zahl (geplant); fuer die noch
+    # folgenden steht bis dahin die Zahl ihrer Dateien als Obergrenze.
+    zaehler = {"n": 0, "erledigt_vorher": 0, "aktuell": 0}
+    noch_offen = {"dateien": sum(len(d) for d in dateien_je_ordner.values())}
     start_zeit = time.time()
     batch_phase_start = {"zeit": None}
+
+    def gesamt():
+        return max(zaehler["erledigt_vorher"] + zaehler["aktuell"] + noch_offen["dateien"],
+                   zaehler["n"], 1)
 
     def fortschritt(idx, info):
         if idx is None:
@@ -213,26 +307,37 @@ def alles_indexieren(ordner_liste, soll_abbrechen, melden):
             return
         zaehler["n"] += 1
         vergangen = time.time() - start_zeit
+        summe = gesamt()
         melden({
             "art": "datei",
-            "anteil": min(zaehler["n"] / gesamt, 1.0),
+            "anteil": min(zaehler["n"] / summe, 1.0),
             "n": zaehler["n"],
-            "gesamt": gesamt,
+            "gesamt": summe,
             "name": info,
-            "restzeit_sek": vergangen / zaehler["n"] * (gesamt - zaehler["n"]),
+            "restzeit_sek": vergangen / zaehler["n"] * (summe - zaehler["n"]),
         })
 
-    for o in ordner_liste:
+    def geplant(anzahl):
+        zaehler["aktuell"] = anzahl
+
+    for o, dateien in dateien_je_ordner.items():
         if soll_abbrechen():
             return False
-        if not os.path.exists(o):
-            continue
-        aktualisiere_index(o, modell=modell, still=True, fortschritt_fn=fortschritt)
+        noch_offen["dateien"] -= len(dateien)
+        batch_phase_start["zeit"] = None
+        aktualisiere_index(o, modell=modell, still=True, fortschritt_fn=fortschritt,
+                           soll_abbrechen=soll_abbrechen, dateien=dateien, geplant_fn=geplant)
+        zaehler["erledigt_vorher"] += zaehler["aktuell"]
+        zaehler["aktuell"] = 0
+
+    if soll_abbrechen():
+        return False
 
     # Karteileichen entfernen: Eintraege aus Ordnern, die nicht mehr
     # ueberwacht werden, und Dateien, die es nicht mehr gibt. Ohne das
     # waechst index.pkl endlos und liefert Treffer aus laengst entfernten
-    # Ordnern.
+    # Ordnern. Laeuft auch, wenn es gar keine Dateien mehr gibt - frueher
+    # endete der Lauf in dem Fall vorher, und die alten Eintraege blieben.
     try:
         bereinige_index()
     except Exception as e:
