@@ -59,6 +59,19 @@ DATEIENDUNG = ".lockara-lizenz"
 FRUEHERE_DATEIENDUNG = ".smartsearch-lizenz"
 KULANZ_TAGE = 30
 
+# Testlizenzen ("art": "test" in den Daten) schalten die Personensuche fuer
+# kurze Zeit frei. Sie stellt der Hersteller auf Anfrage per E-Mail aus
+# (werkzeuge/lizenz_ausstellen.py --test). Fuer sie gibt es KEINE Kulanz:
+# Wer nur testet, verliert mit dem Ablauf nichts, und sonst waeren aus 14
+# Testtagen 44 geworden.
+ART_TEST = "test"
+TEST_TAGE = 14
+
+# Eine Lizenz laesst sich auch als Text weitergeben - als "Lizenzcode", der
+# in eine E-Mail passt und in der App eingefuegt wird. Inhalt: dieselbe
+# unterschriebene Lizenz wie in der Datei, kompakt und Base64-kodiert.
+CODE_PRAEFIX = "LOCKARA-"
+
 # Hier liegt die geladene Lizenz des Nutzers.
 LIZENZ_DATEI = os.path.join(DATEN_ORDNER, "lizenz" + DATEIENDUNG)
 # So hiess die Datei bei SmartSearch. Nach dem Umzug des Datenordners
@@ -88,6 +101,10 @@ class Status:
     @property
     def lizenziert(self):
         return self.art in ("gueltig", "kulanz")
+
+    @property
+    def ist_test(self):
+        return self.daten.get("art") == ART_TEST
 
     @property
     def gueltig_bis(self):
@@ -149,11 +166,66 @@ def pruefen(inhalt, schluessel=None, heute=None):
     bis = status.gueltig_bis
     if bis is None:
         return Status("ungueltig", daten=daten, grund="format")
-    if heute > bis + datetime.timedelta(days=KULANZ_TAGE):
+    kulanz = 0 if daten.get("art") == ART_TEST else KULANZ_TAGE
+    if heute > bis + datetime.timedelta(days=kulanz):
         status.art = "abgelaufen"
     elif heute > bis:
         status.art = "kulanz"
     return status
+
+
+def als_code(inhalt):
+    """Lizenzdatei-Inhalt -> Lizenzcode zum Einfuegen ("LOCKARA-...")."""
+    if isinstance(inhalt, bytes):
+        inhalt = inhalt.decode("utf-8")
+    paket = json.loads(inhalt)
+    kompakt = json.dumps(paket, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return CODE_PRAEFIX + base64.urlsafe_b64encode(kompakt.encode("utf-8")).decode().rstrip("=")
+
+
+def aus_code(code):
+    """Lizenzcode -> Inhalt einer Lizenzdatei (bytes), oder None.
+
+    Leerzeichen und Zeilenumbrueche werden ignoriert: E-Mail-Programme
+    brechen lange Zeilen gern um, und beim Kopieren rutscht oft ein
+    Leerzeichen mit."""
+    text = "".join((code or "").split())
+    if text.upper().startswith(CODE_PRAEFIX):
+        text = text[len(CODE_PRAEFIX):]
+    if not text:
+        return None
+    try:
+        roh = base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
+        json.loads(roh.decode("utf-8"))
+        return roh
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def _speichern(inhalt):
+    os.makedirs(DATEN_ORDNER, exist_ok=True)
+    # Genau die geprueften Bytes schreiben, nicht die Quelle ein zweites
+    # Mal kopieren - sonst koennte zwischen Pruefen und Kopieren eine
+    # andere Datei an ihrer Stelle liegen.
+    ziel_tmp = LIZENZ_DATEI + ".tmp"
+    with open(ziel_tmp, "wb") as f:
+        f.write(inhalt)
+    os.replace(ziel_tmp, LIZENZ_DATEI)
+
+
+def code_installieren(code):
+    """Wie installieren(), aber mit einem Lizenzcode statt einer Datei.
+
+    Eine abgelaufene Testlizenz ersetzt nie eine gueltige Lizenz - wer
+    einen alten Testcode noch einmal einfuegt, soll seine gekaufte Lizenz
+    nicht verlieren."""
+    inhalt = aus_code(code)
+    if inhalt is None:
+        return Status("ungueltig", grund="format")
+    ergebnis = pruefen(inhalt)
+    if ergebnis.lizenziert or (ergebnis.art == "abgelaufen" and not status().lizenziert):
+        _speichern(inhalt)
+    return ergebnis
 
 
 def _fruehere_lizenz_umbenennen():
@@ -188,12 +260,5 @@ def installieren(quelle):
         return Status("ungueltig", grund="lesen")
     ergebnis = pruefen(inhalt)
     if ergebnis.art in ("gueltig", "kulanz", "abgelaufen"):
-        os.makedirs(DATEN_ORDNER, exist_ok=True)
-        # Genau die geprueften Bytes schreiben, nicht die Quelle ein zweites
-        # Mal kopieren - sonst koennte zwischen Pruefen und Kopieren eine
-        # andere Datei an ihrer Stelle liegen.
-        ziel_tmp = LIZENZ_DATEI + ".tmp"
-        with open(ziel_tmp, "wb") as f:
-            f.write(inhalt)
-        os.replace(ziel_tmp, LIZENZ_DATEI)
+        _speichern(inhalt)
     return ergebnis

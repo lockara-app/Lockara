@@ -11,19 +11,24 @@ und Geburtsdatum eines Mandanten haben in einer Verlaufsdatei nichts zu
 suchen.
 
 Ohne gueltige Lizenz zeigt das Fenster statt des Formulars, wofuer die
-Funktion da ist und wie man sie bekommt (kern/lizenz.py).
+Funktion da ist, einen Knopf fuer die Anfrage einer Testlizenz per E-Mail
+und ein Feld fuer den Lizenzcode, der darauf zurueckkommt (kern/lizenz.py,
+werkzeuge/lizenz_ausstellen.py --test).
 """
 
 import datetime
 import os
 import re
 import threading
+import urllib.parse
+import webbrowser
 from tkinter import filedialog
 
 import customtkinter as ctk
 
 from lockara import plattform, version
 from lockara.kern import bericht, lizenz
+from lockara.kern.rueckmeldung import RUECKMELDUNG_ADRESSE
 from lockara.kern import personensuche as ps
 from lockara.oberflaeche import farben
 from lockara.oberflaeche.i18n import t
@@ -90,16 +95,76 @@ def oeffnen(app):
 
     stand = lizenz.status()
     if not stand.lizenziert:
-        _gesperrt(app, top)
+        _gesperrt(app, top, stand)
         return
-    _Personensuche(app, top, stand.daten.get("lizenznehmer", ""))
+    _freigeschaltet(app, top, stand)
 
 
-def _gesperrt(app, top):
-    ctk.CTkLabel(top, text=t("person.locked_heading"), font=("Helvetica", 16, "bold")
+def _datum(d):
+    return d.strftime("%d.%m.%Y") if d else ""
+
+
+def _freigeschaltet(app, top, stand):
+    name = stand.daten.get("lizenznehmer", "")
+    hinweis = ""
+    if stand.ist_test:
+        hinweis = t("person.trial_active", name=name, bis=_datum(stand.gueltig_bis))
+        # Steht auch im Bericht: ein Nachweis aus der Testphase soll als
+        # solcher erkennbar bleiben.
+        name = t("report.trial_suffix", name=name, bis=_datum(stand.gueltig_bis))
+    _Personensuche(app, top, name, hinweis)
+
+
+def anfrage_link():
+    """mailto-Link fuer die Anfrage einer Testlizenz."""
+    return (f"mailto:{RUECKMELDUNG_ADRESSE}"
+            f"?subject={urllib.parse.quote(t('person.mail_subject'))}"
+            f"&body={urllib.parse.quote(t('person.mail_body'))}")
+
+
+def _gesperrt(app, top, stand):
+    """Ohne Lizenz: wofuer die Funktion da ist, wie man sie testet, und ein
+    Feld fuer den Lizenzcode aus der E-Mail."""
+    rahmen = ctk.CTkFrame(top, fg_color="transparent")
+    rahmen.pack(fill="both", expand=True)
+
+    ctk.CTkLabel(rahmen, text=t("person.locked_heading"), font=("Helvetica", 16, "bold")
                  ).pack(padx=24, pady=(28, 8), anchor="w")
-    ctk.CTkLabel(top, text=t("person.locked_text"), font=("Helvetica", 12), justify="left",
-                 wraplength=640, text_color=_GRAU).pack(padx=24, pady=(0, 18), anchor="w")
+    ctk.CTkLabel(rahmen, text=t("person.locked_text"), font=("Helvetica", 12), justify="left",
+                 wraplength=680, text_color=_GRAU).pack(padx=24, pady=(0, 14), anchor="w")
+    if stand.ist_test and stand.art == "abgelaufen":
+        ctk.CTkLabel(rahmen, text=t("person.trial_expired", bis=_datum(stand.gueltig_bis)),
+                     font=("Helvetica", 12), justify="left", wraplength=680,
+                     text_color="#ef6c00").pack(padx=24, pady=(0, 14), anchor="w")
+
+    ctk.CTkButton(rahmen, text=t("person.request_trial"),
+                  command=lambda: webbrowser.open(anfrage_link())).pack(padx=24, pady=(0, 22), anchor="w")
+
+    ctk.CTkLabel(rahmen, text=t("person.code_label"), font=("Helvetica", 12, "bold")
+                 ).pack(padx=24, pady=(0, 2), anchor="w")
+    ctk.CTkLabel(rahmen, text=t("person.code_hint"), font=("Helvetica", 10),
+                 text_color=_GRAU).pack(padx=24, anchor="w")
+    feld = ctk.CTkTextbox(rahmen, height=90)
+    feld.pack(padx=24, pady=(4, 6), fill="x")
+    meldung = ctk.CTkLabel(rahmen, text="", font=("Helvetica", 11), justify="left",
+                           wraplength=680, text_color="#c62828")
+
+    def freischalten():
+        ergebnis = lizenz.code_installieren(feld.get("1.0", "end"))
+        if ergebnis.lizenziert:
+            rahmen.destroy()
+            if hasattr(app, "lizenz_hinweis_aktualisieren"):
+                app.lizenz_hinweis_aktualisieren()
+            _freigeschaltet(app, top, lizenz.status())
+            return
+        if ergebnis.art == "abgelaufen":
+            meldung.configure(text=t("person.code_expired", bis=_datum(ergebnis.gueltig_bis)))
+        else:
+            meldung.configure(text=t("person.code_invalid"))
+
+    leiste = ctk.CTkFrame(rahmen, fg_color="transparent")
+    leiste.pack(fill="x", padx=24, pady=(0, 4))
+    ctk.CTkButton(leiste, text=t("person.activate"), command=freischalten).pack(side="left")
 
     def lizenz_laden():
         top.destroy()
@@ -111,16 +176,17 @@ def _gesperrt(app, top):
             except Exception:
                 pass
 
-    leiste = ctk.CTkFrame(top, fg_color="transparent")
-    leiste.pack(fill="x", padx=24, pady=(0, 24))
-    ctk.CTkButton(leiste, text=t("person.locked_settings"), command=lizenz_laden
-                  ).pack(side="left")
-    ctk.CTkButton(leiste, text=t("person.close_button"), fg_color=farben.SEITE_KNOPF,
-                  hover_color=farben.SEITE_KNOPF_HOVER, command=top.destroy).pack(side="right")
+    ctk.CTkButton(leiste, text=t("person.locked_settings"), fg_color=farben.SEITE_KNOPF,
+                  hover_color=farben.SEITE_KNOPF_HOVER, command=lizenz_laden).pack(side="left", padx=10)
+    meldung.pack(padx=24, pady=(4, 0), anchor="w")
+
+    ctk.CTkButton(rahmen, text=t("person.close_button"), fg_color=farben.SEITE_KNOPF,
+                  hover_color=farben.SEITE_KNOPF_HOVER, command=top.destroy
+                  ).pack(side="bottom", anchor="e", padx=24, pady=(0, 20))
 
 
 class _Personensuche:
-    def __init__(self, app, top, lizenznehmer):
+    def __init__(self, app, top, lizenznehmer, hinweis=""):
         self.app = app
         self.top = top
         self.lizenznehmer = lizenznehmer
@@ -132,6 +198,9 @@ class _Personensuche:
                      ).pack(padx=20, pady=(18, 2), anchor="w")
         ctk.CTkLabel(top, text=t("person.intro"), font=("Helvetica", 11), justify="left",
                      wraplength=700, text_color=_GRAU).pack(padx=20, pady=(0, 10), anchor="w")
+        if hinweis:
+            ctk.CTkLabel(top, text=hinweis, font=("Helvetica", 11, "bold"),
+                         text_color="#ef6c00").pack(padx=20, pady=(0, 8), anchor="w")
 
         # --- Formular ---
         form = ctk.CTkFrame(top, corner_radius=10)

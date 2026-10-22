@@ -1251,7 +1251,9 @@ class Hauptfenster(ctk.CTk):
             stand = lizenz.status()
         except Exception:
             return
-        if stand.art == "abgelaufen" and stand.gueltig_bis:
+        # Eine abgelaufene TESTlizenz ist kein Grund fuer einen Dauerhinweis -
+        # gesperrt ist dann nur die Personensuche, und die sagt es selbst.
+        if stand.art == "abgelaufen" and stand.gueltig_bis and not stand.ist_test:
             self.setze_status(t("license.status_expired",
                                 bis=stand.gueltig_bis.strftime("%d.%m.%Y")))
 

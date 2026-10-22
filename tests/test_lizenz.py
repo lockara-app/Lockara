@@ -61,6 +61,28 @@ def main():
     fremd = aussteller.ausstellen("Kanzlei Test", 5, "2027-10-31", privat=fremd_privat, heute=heute)
     erwarte("mit fremdem Schluessel ausgestellt", fremd, "ungueltig", "signatur")
 
+    # --- Testlizenz und Lizenzcode ---
+    test = aussteller.ausstellen("Kanzlei Probe", 1, "2026-10-28", privat=privat, heute=heute, test=True)
+    erwarte("Testlizenz gueltig", test, "gueltig")
+    erwarte("Testlizenz einen Tag nach Ablauf: ohne Kulanz", test, "abgelaufen",
+            tag=datetime.date(2026, 10, 29))
+    if not lizenz.pruefen(test, schluessel=schluessel, heute=heute).ist_test:
+        fehler += 1
+        print("  FEHL Testlizenz wird nicht als Test erkannt")
+    paket = json.loads(test)
+    del paket["daten"]["art"]
+    erwarte("Testvermerk entfernt (dann Kulanz erschlichen)", json.dumps(paket), "ungueltig", "signatur")
+
+    code = lizenz.als_code(test)
+    umgebrochen = code[:30] + "\n " + code[30:70] + " \r\n" + code[70:]
+    for name, c in (("Lizenzcode", code), ("Lizenzcode mit Umbruechen", umgebrochen),
+                    ("Lizenzcode klein geschrieben (Praefix)", "lockara-" + code[len(lizenz.CODE_PRAEFIX):])):
+        erwarte(name, lizenz.aus_code(c) or b"", "gueltig")
+    erwarte("Lizenzcode abgeschnitten", lizenz.aus_code(code[:-20]) or b"kaputt", "ungueltig")
+    if lizenz.aus_code("Hallo Welt") is not None:
+        fehler += 1
+        print("  FEHL Unsinn wurde als Code angenommen")
+
     if fehler:
         print(f"{fehler} Faelle weichen ab.")
         return 1
