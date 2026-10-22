@@ -40,6 +40,9 @@ def oeffnen(app):
 
     tabview = ctk.CTkTabview(top)
     tabview.pack(fill="both", expand=True, padx=16, pady=16)
+    # Damit andere Fenster direkt einen Reiter oeffnen koennen (z. B. die
+    # Personensuche den Reiter Lizenz).
+    app.einstellungen_tabs = tabview
 
     tab_allgemein = tabview.add(t("settings.tab_general"))
     tab_hilfe = tabview.add(t("settings.tab_help"))
@@ -133,6 +136,12 @@ def lizenz_text(status):
     Hauptfenster benutzt, damit beide Stellen dasselbe sagen."""
     d = status.daten
     bis = status.gueltig_bis.strftime("%d.%m.%Y") if status.gueltig_bis else ""
+    if status.ist_test and status.art == "gueltig":
+        return (t("license.trial_title"),
+                t("license.trial_text", name=d.get("lizenznehmer", ""), bis=bis), "#2e7d32")
+    if status.ist_test and status.art == "abgelaufen":
+        return (t("license.trial_expired_title"),
+                t("license.trial_expired_text", name=d.get("lizenznehmer", ""), bis=bis), "#78909c")
     if status.art == "gueltig":
         return (t("license.valid_title"),
                 t("license.valid_text", name=d.get("lizenznehmer", ""),
@@ -167,9 +176,29 @@ def _lizenz_tab(app, parent):
             rahmen, text=t("license.load_button"), fg_color=farben.SEITE_KNOPF,
             hover_color=farben.SEITE_KNOPF_HOVER, anchor="w", command=laden
         ).pack(padx=4, pady=4, fill="x")
+        ctk.CTkLabel(rahmen, text=t("license.code_label"), font=("Helvetica", 11)
+                     ).pack(padx=4, pady=(10, 2), anchor="w")
+        code_feld = ctk.CTkTextbox(rahmen, height=54)
+        code_feld.pack(padx=4, pady=(0, 4), fill="x")
+        ctk.CTkButton(
+            rahmen, text=t("license.code_button"), fg_color=farben.SEITE_KNOPF,
+            hover_color=farben.SEITE_KNOPF_HOVER, anchor="w",
+            command=lambda: code_aktivieren(code_feld.get("1.0", "end"))
+        ).pack(padx=4, pady=4, fill="x")
         ctk.CTkLabel(rahmen, text=t("license.offline_hint"), font=("Helvetica", 10),
                      text_color="#78909c", justify="left", wraplength=400
                      ).pack(padx=4, pady=(8, 4), anchor="w")
+
+    def code_aktivieren(code):
+        ergebnis = lizenz.code_installieren(code)
+        if not ergebnis.lizenziert:
+            from tkinter import messagebox
+            bis = ergebnis.gueltig_bis.strftime("%d.%m.%Y") if ergebnis.gueltig_bis else ""
+            text = (t("person.code_expired", bis=bis) if ergebnis.art == "abgelaufen"
+                    else t("person.code_invalid"))
+            messagebox.showwarning(t("license.invalid_title"), text, parent=app.einstellungen_fenster)
+        neu_zeichnen()
+        app.lizenz_hinweis_aktualisieren()
 
     def laden():
         pfad = filedialog.askopenfilename(

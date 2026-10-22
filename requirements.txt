@@ -49,6 +49,7 @@ cryptography
 
 # --- Dateien lesen ---
 pypdf
+reportlab                                   # PDF-Bericht der Personensuche (BSD-Lizenz)
 pdfplumber
 python-docx
 openpyxl

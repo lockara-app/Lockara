@@ -37,6 +37,7 @@ from lockara.oberflaeche import farben, i18n, rollen, trefferkarte, verlaufslist
 from lockara.oberflaeche.dialoge import einfuehrung, fehlerliste, meldungen
 from lockara.oberflaeche.dialoge import einstellungen as einstellungen_dialog
 from lockara.oberflaeche.dialoge import ordner as ordner_dialog
+from lockara.oberflaeche.dialoge import personensuche as personensuche_dialog
 from lockara.oberflaeche.i18n import t
 
 ctk.set_appearance_mode("System")
@@ -237,6 +238,13 @@ class Hauptfenster(ctk.CTk):
             self.sidebar_frame, text=t("sidebar.update_index"), fg_color=farben.SEITE_KNOPF, hover_color=farben.SEITE_KNOPF_HOVER, anchor="w", command=self.index_aktualisieren
         )
         self.index_button.pack(padx=12, pady=3, fill="x")
+
+        # Personensuche (DSGVO): sichtbar fuer alle, nutzbar mit Lizenz -
+        # ohne Lizenz erklaert das Fenster, wofuer sie da ist.
+        self.personensuche_button = ctk.CTkButton(
+            self.sidebar_frame, text=t("sidebar.person_search"), fg_color=farben.SEITE_KNOPF, hover_color=farben.SEITE_KNOPF_HOVER, anchor="w", command=self.oeffne_personensuche
+        )
+        self.personensuche_button.pack(padx=12, pady=3, fill="x")
 
         # Warnbutton für Dateien, die beim Indexieren nicht gelesen werden
         # konnten (siehe search.fehlgeschlagene_dateien()). Standardmäßig
@@ -1228,6 +1236,9 @@ class Hauptfenster(ctk.CTk):
     def oeffne_einstellungen_fenster(self):
         einstellungen_dialog.oeffnen(self)
 
+    def oeffne_personensuche(self):
+        personensuche_dialog.oeffnen(self)
+
     def zeige_setup_guide(self, mit_ordnerauswahl=True):
         einfuehrung.zeigen(self, mit_ordnerauswahl)
 
@@ -1240,7 +1251,9 @@ class Hauptfenster(ctk.CTk):
             stand = lizenz.status()
         except Exception:
             return
-        if stand.art == "abgelaufen" and stand.gueltig_bis:
+        # Eine abgelaufene TESTlizenz ist kein Grund fuer einen Dauerhinweis -
+        # gesperrt ist dann nur die Personensuche, und die sagt es selbst.
+        if stand.art == "abgelaufen" and stand.gueltig_bis and not stand.ist_test:
             self.setze_status(t("license.status_expired",
                                 bis=stand.gueltig_bis.strftime("%d.%m.%Y")))
 

@@ -1,0 +1,7 @@
+Verteiler Mandanten-Newsletter (Stand 09/2024)
+
+a.brandt@beispiel.de
+k.schaefer-uhlmann@beispiel.de
+info@baeckerei-kaiser.example
+sophie.wagner@beispiel.de
+t.okafor@beispiel.de

@@ -41,6 +41,9 @@ Immer im Projektordner:
 | Begriffsliste-Test (1 Sekunde) | `venv/bin/python -m tests.test_begriffe` | `venv\Scripts\python -m tests.test_begriffe` |
 | Robustheitstest (1 Sekunde) | `venv/bin/python -m tests.test_robustheit` | `venv\Scripts\python -m tests.test_robustheit` |
 | Rolltest (1 Sekunde) | `venv/bin/python -m tests.test_rollen` | `venv\Scripts\python -m tests.test_rollen` |
+| Personensuche-Test (1 Sekunde) | `venv/bin/python -m tests.test_personensuche` | `venv\Scripts\python -m tests.test_personensuche` |
+| Personensuche messen (50 Testakten) | `venv/bin/python -m werkzeuge.personensuche_messen` | `venv\Scripts\python -m werkzeuge.personensuche_messen` |
+| Personen-Testakten neu erzeugen | `venv/bin/python -m werkzeuge.testdokumente.personen` | `venv\Scripts\python -m werkzeuge.testdokumente.personen` |
 | Suchqualität messen | `venv/bin/python -m werkzeuge.such_diagnose --testdokumente` | `venv\Scripts\python -m werkzeuge.such_diagnose --testdokumente` |
 | Testdokumente neu erzeugen | `venv/bin/python -m werkzeuge.testdokumente` | `venv\Scripts\python -m werkzeuge.testdokumente` |
 | Index untersuchen | `venv/bin/python -m werkzeuge.diagnose` | `venv\Scripts\python -m werkzeuge.diagnose` |

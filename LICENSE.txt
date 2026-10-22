@@ -103,6 +103,7 @@ ihren eigenen Lizenzen stehen:
   python-docx, openpyxl, python-pptx    MIT- bzw. MIT/LGPL-Lizenz
   Pillow                                MIT-CMU-Lizenz
   watchdog                              Apache-Lizenz 2.0
+  ReportLab                             BSD-Lizenz
 
 Die Texterkennung für eingescannte PDFs nutzt das in macOS enthaltene
 Vision-Framework von Apple.

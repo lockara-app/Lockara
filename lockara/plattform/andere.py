@@ -119,3 +119,13 @@ def app_ist_aktiv():
 
 def laufende_instanz_aktivieren():
     return False
+
+
+def schriftdateien():
+    """(normal, fett) fuer PDF-Berichte - unter Linux meist DejaVu."""
+    ordner = "/usr/share/fonts/truetype/dejavu"
+    normal = os.path.join(ordner, "DejaVuSans.ttf")
+    fett = os.path.join(ordner, "DejaVuSans-Bold.ttf")
+    if os.path.exists(normal) and os.path.exists(fett):
+        return normal, fett
+    return None

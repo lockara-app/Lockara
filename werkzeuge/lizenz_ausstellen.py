@@ -26,6 +26,9 @@ LIZENZ AUSSTELLEN
 
 PRUEFEN
     venv/bin/python -m werkzeuge.lizenz_ausstellen --pruefen datei.lockara-lizenz
+
+TESTLIZENZ AUF ANFRAGE (14 Tage, gibt eine fertige Antwort-E-Mail aus)
+    venv/bin/python -m werkzeuge.lizenz_ausstellen --test --lizenznehmer "Kanzlei Muster"
 """
 
 import argparse
@@ -92,8 +95,9 @@ def _privater_schluessel(pfad=PRIVAT_DATEI):
         raise SystemExit(f"Kein privater Schluessel unter {pfad}. Zuerst: --schluessel-erzeugen")
 
 
-def ausstellen(lizenznehmer, arbeitsplaetze, gueltig_bis, privat=PRIVAT_DATEI, heute=None):
-    """Gibt den Inhalt einer Lizenzdatei (str) zurueck."""
+def ausstellen(lizenznehmer, arbeitsplaetze, gueltig_bis, privat=PRIVAT_DATEI, heute=None, test=False):
+    """Gibt den Inhalt einer Lizenzdatei (str) zurueck. test=True stellt eine
+    Testlizenz aus (ohne Kulanz nach Ablauf, siehe kern/lizenz.py)."""
     if arbeitsplaetze < 1:
         raise ValueError("arbeitsplaetze muss mindestens 1 sein")
     datetime.date.fromisoformat(gueltig_bis)   # wirft bei falschem Datum
@@ -106,6 +110,8 @@ def ausstellen(lizenznehmer, arbeitsplaetze, gueltig_bis, privat=PRIVAT_DATEI, h
         "ausgestellt": (heute or datetime.date.today()).isoformat(),
         "gueltig_bis": gueltig_bis,
     }
+    if test:
+        daten["art"] = lizenz.ART_TEST
     signatur = _privater_schluessel(privat).sign(lizenz.kanonisch(daten))
     return json.dumps({"daten": daten, "signatur": base64.b64encode(signatur).decode()},
                       ensure_ascii=False, indent=2) + "\n"
@@ -124,6 +130,9 @@ def main():
     p.add_argument("--arbeitsplaetze", type=int)
     p.add_argument("--gueltig-bis", help="JJJJ-MM-TT")
     p.add_argument("--pruefen", metavar="DATEI")
+    p.add_argument("--test", action="store_true",
+                   help=f"Testlizenz: 1 Arbeitsplatz, {lizenz.TEST_TAGE} Tage, gibt den Code fuer die E-Mail aus")
+    p.add_argument("--code", action="store_true", help="zusaetzlich den Lizenzcode ausgeben")
     a = p.parse_args()
 
     if a.schluessel_erzeugen:
@@ -138,6 +147,13 @@ def main():
         for k, v in s.daten.items():
             print(f"  {k}: {v}")
         sys.exit(0 if s.lizenziert else 1)
+    if a.test:
+        if not a.lizenznehmer:
+            p.error("--lizenznehmer angeben (Name der Kanzlei oder Firma)")
+        bis = (datetime.date.today() + datetime.timedelta(days=lizenz.TEST_TAGE)).isoformat()
+        inhalt = ausstellen(a.lizenznehmer, a.arbeitsplaetze or 1, a.gueltig_bis or bis, test=True)
+        print(mail_text(a.lizenznehmer, a.gueltig_bis or bis, lizenz.als_code(inhalt)))
+        return
     if not (a.lizenznehmer and a.arbeitsplaetze and a.gueltig_bis):
         p.error("--lizenznehmer, --arbeitsplaetze und --gueltig-bis angeben")
     inhalt = ausstellen(a.lizenznehmer, a.arbeitsplaetze, a.gueltig_bis)
@@ -145,6 +161,35 @@ def main():
     with open(name, "w", encoding="utf-8") as f:
         f.write(inhalt)
     print(f"Ausgestellt: {os.path.abspath(name)}")
+    if a.code:
+        print(f"\nLizenzcode:\n{lizenz.als_code(inhalt)}")
+
+
+def mail_text(lizenznehmer, gueltig_bis, code):
+    """Fertige Antwort auf eine Testanfrage - zum Kopieren in die E-Mail."""
+    bis = datetime.date.fromisoformat(gueltig_bis).strftime("%d.%m.%Y")
+    return f"""---------------- E-Mail zum Kopieren ----------------
+Betreff: Ihre Testlizenz für die Lockara-Personensuche
+
+Guten Tag,
+
+vielen Dank für Ihr Interesse. Hier ist Ihre Testlizenz für {lizenznehmer},
+gültig bis {bis}:
+
+{code}
+
+So schalten Sie die Personensuche frei:
+1. Lockara öffnen und links auf „Personensuche (DSGVO)“ klicken.
+2. Den Code oben vollständig kopieren und in das Feld „Lizenzcode“ einfügen.
+3. Auf „Freischalten“ klicken.
+
+Die normale Suche bleibt auch nach dem Testzeitraum unverändert nutzbar.
+Bei Fragen antworten Sie einfach auf diese E-Mail.
+
+Viele Grüße
+Marcel Landmann
+Lockara · kontakt@lockara.de
+------------------------------------------------------"""
 
 
 if __name__ == "__main__":

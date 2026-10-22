@@ -76,6 +76,11 @@ ort_bibliotheken = collect_dynamic_libs('onnxruntime')
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules  # noqa: E402
 rapidocr_dateien = collect_data_files('rapidocr')
 rapidocr_module = collect_submodules('rapidocr')
+# PDF-Bericht der Personensuche (kern/bericht.py). reportlab wird erst beim
+# Speichern importiert und laedt Teile ueber Namen nach; die Schriftdaten
+# braucht die Ausweichschrift Helvetica.
+reportlab_module = collect_submodules('reportlab')
+reportlab_dateien = collect_data_files('reportlab')
 
 a = Analysis(
     [str(ROOT / 'lockara' / '__main__.py')],
@@ -86,7 +91,7 @@ a = Analysis(
     # ressourcen/ (Symbole) liest das Programm zur Laufzeit ueber
     # pfade.ressource() - siehe dort.
     datas=[(str(ROOT / 'LICENSE.txt'), '.'),
-           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + lizenz_dateien + modell_dateien + rapidocr_dateien,
+           (str(ROOT / 'ressourcen' / 'icons'), 'ressourcen/icons')] + lizenz_dateien + modell_dateien + rapidocr_dateien + reportlab_dateien,
     hiddenimports=[
         'onnxruntime',
         'tokenizers',
@@ -105,7 +110,7 @@ a = Analysis(
         'Vision',
         'Foundation',
         'objc',
-    ] + rapidocr_module,
+    ] + rapidocr_module + reportlab_module,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
