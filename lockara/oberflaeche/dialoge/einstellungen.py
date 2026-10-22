@@ -40,6 +40,9 @@ def oeffnen(app):
 
     tabview = ctk.CTkTabview(top)
     tabview.pack(fill="both", expand=True, padx=16, pady=16)
+    # Damit andere Fenster direkt einen Reiter oeffnen koennen (z. B. die
+    # Personensuche den Reiter Lizenz).
+    app.einstellungen_tabs = tabview
 
     tab_allgemein = tabview.add(t("settings.tab_general"))
     tab_hilfe = tabview.add(t("settings.tab_help"))

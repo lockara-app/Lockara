@@ -48,6 +48,7 @@ autostart_setzen = _system.autostart_setzen
 fruehere_einstellungen_uebernehmen = _system.fruehere_einstellungen_uebernehmen
 systemsprache = _system.systemsprache
 system_beschreibung = _system.system_beschreibung
+schriftdateien = _system.schriftdateien
 
 # Quick Look gibt es so nur auf dem Mac.
 VORSCHAU_VERFUEGBAR = _system.VORSCHAU_VERFUEGBAR

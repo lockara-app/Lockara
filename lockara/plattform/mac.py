@@ -478,3 +478,17 @@ def system_beschreibung():
     """Fuer die Rueckmelde-E-Mail, z. B. "macOS 15.1 (arm64)"."""
     import platform
     return f"macOS {platform.mac_ver()[0]} ({platform.machine()})"
+
+
+def schriftdateien():
+    """(normal, fett) als TrueType-Dateien fuer PDF-Berichte - oder None.
+
+    Arial liegt auf jedem Mac und deckt Umlaute, tuerkische und
+    osteuropaeische Buchstaben ab. Die eingebaute Helvetica von reportlab
+    kann nur Westeuropaeisch: "Özdemir" ginge, "Yılmaz" nicht."""
+    ordner = "/System/Library/Fonts/Supplemental"
+    normal = os.path.join(ordner, "Arial.ttf")
+    fett = os.path.join(ordner, "Arial Bold.ttf")
+    if os.path.exists(normal) and os.path.exists(fett):
+        return normal, fett
+    return None

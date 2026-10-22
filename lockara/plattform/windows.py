@@ -417,3 +417,14 @@ def system_beschreibung():
     """Fuer die Rueckmelde-E-Mail, z. B. "Windows 11 (AMD64)"."""
     import platform
     return f"Windows {platform.release()} ({platform.machine()})"
+
+
+def schriftdateien():
+    """(normal, fett) als TrueType-Dateien fuer PDF-Berichte - oder None.
+    Arial gehoert zu jedem Windows (siehe mac.py zum Warum)."""
+    ordner = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
+    normal = os.path.join(ordner, "arial.ttf")
+    fett = os.path.join(ordner, "arialbd.ttf")
+    if os.path.exists(normal) and os.path.exists(fett):
+        return normal, fett
+    return None
