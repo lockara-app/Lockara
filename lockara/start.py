@@ -79,6 +79,27 @@ def selbsttest():
         print(f"  FEHLT   {e}")
         fehler += 1
 
+    # Der PDF-Bericht der Personensuche: reportlab wird erst beim Speichern
+    # geladen und zieht Teile ueber Namen nach - ob das im Bundle klappt,
+    # zeigt nur ein echter Bericht. Geschrieben wird in einen Temp-Ordner.
+    print("\nBericht der Personensuche:")
+    try:
+        import datetime
+        import tempfile
+        from lockara import plattform as pf
+        from lockara.kern import bericht, personensuche as ps
+        person = ps.Person(name="Selbst Test")
+        ergebnis = ps.Ergebnis(person, [], 0, [], [], datetime.datetime.now(), None)
+        texte = {k: k for k in bericht.TEXT_SCHLUESSEL}
+        texte["datum_format"] = "%d.%m.%Y"
+        ziel = os.path.join(tempfile.mkdtemp(prefix="lockara-selbsttest-"), "bericht.pdf")
+        bericht.schreiben(ziel, ergebnis, texte, {m: m for m in ps.MERKMAL_REIHENFOLGE}, "selbsttest")
+        schrift = "Systemschrift" if pf.schriftdateien() else "Helvetica (Ausweichschrift)"
+        print(f"  ok      PDF geschrieben ({os.path.getsize(ziel)} Bytes, {schrift})")
+    except Exception as e:
+        print(f"  FEHLT   {e}")
+        fehler += 1
+
     print()
     if fehler:
         print(f"Ergebnis: {fehler} Baustein(e) fehlen. Das Bundle ist unbrauchbar.")
