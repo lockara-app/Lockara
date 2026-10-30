@@ -4,7 +4,7 @@ plattform/mac.py - alles, was Lockara auf dem Mac ANDERS macht als
 unter Windows.
 
 Zwei Teile:
-  1. Bedienung ueber PyObjC: Menueleisten-Symbol (die Lupe oben rechts),
+  1. Bedienung ueber PyObjC: Menueleisten-Symbol (Maskottchen oben rechts),
      globaler Tastenkurzbefehl, Dock-Symbol, Fenster nach vorne holen und
      die Pruefung, ob Lockara schon laeuft.
   2. System-Handgriffe: Datei oeffnen, im Finder zeigen, Quick Look,
@@ -80,7 +80,7 @@ BUNDLE_KENNUNG = "de.lockara.app"
 if VERFUEGBAR:
 
     class MenueleistenSymbol(NSObject):
-        """Die Lupe in der Menueleiste. Ein Klick darauf ruft die
+        """Das Maskottchen in der Menueleiste. Ein Klick darauf ruft die
         uebergebene Funktion auf (in oberflaeche/hauptfenster.py: Fenster auf/zu)."""
 
         def initWithCallback_(self, callback):
@@ -92,13 +92,21 @@ if VERFUEGBAR:
                 )
 
                 button = self.status_item.button()
-                # Natives SF-Symbol statt Text-/Emoji-Zeichen: skaliert sauber
-                # mit der Menueleiste, ist als Template-Image immer gut
-                # sichtbar (passt sich an helle/dunkle Menueleiste an) und
-                # wirkt nicht wie ein zu klein geratenes Unicode-Zeichen.
-                symbol = NSImage.imageWithSystemSymbolName_accessibilityDescription_(
-                    "magnifyingglass", "Lockara"
+                # Das Maskottchen (Schluesselloch mit Augen) als einfarbiges
+                # Template-Image: macOS faerbt es passend zur hellen/dunklen
+                # Menueleiste. Die Datei hat 36 px fuer Retina und wird auf
+                # 18 pt gesetzt. Fehlt sie, bleibt es beim SF-Symbol Lupe.
+                from lockara.kern.pfade import ressource
+                symbol = NSImage.alloc().initWithContentsOfFile_(
+                    ressource("icons/menueleiste_vorlage.png")
                 )
+                if symbol:
+                    symbol.setSize_((18, 18))
+                    symbol.setAccessibilityDescription_("Lockara")
+                else:
+                    symbol = NSImage.imageWithSystemSymbolName_accessibilityDescription_(
+                        "magnifyingglass", "Lockara"
+                    )
                 if symbol:
                     symbol.setTemplate_(True)
                     button.setImage_(symbol)
@@ -116,13 +124,13 @@ if VERFUEGBAR:
 
 
 def menueleisten_symbol_anlegen(callback, beenden_callback=None, icon_pfad=None):
-    """Legt das Lupensymbol an. Gibt das Objekt zurueck - es MUSS in einer
+    """Legt das Menueleisten-Symbol an. Gibt das Objekt zurueck - es MUSS in einer
     Variablen aufbewahrt werden, sonst raeumt Python es weg und das Symbol
     verschwindet wieder aus der Menueleiste.
 
     beenden_callback und icon_pfad werden hier nicht gebraucht (Beenden
     laeuft auf dem Mac ueber Cmd+Q und den Knopf in der App, das Symbol
-    ist ein System-Zeichen). Sie stehen nur in der Signatur, damit
+    ist ein eigenes Template-Bild). Sie stehen nur in der Signatur, damit
     die Oberflaeche fuer Mac und Windows denselben Aufruf benutzen kann -
     siehe plattform/windows.py."""
     if not VERFUEGBAR:
