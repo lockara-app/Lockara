@@ -40,6 +40,13 @@ def _index_bauen():
     from lockara.kern import indexierung, ordner
     if not os.path.exists(testfall.ZIEL) or len(os.listdir(testfall.ZIEL)) == 0:
         sys.exit("Testdokumente fehlen. Erst: venv/bin/python -m werkzeuge.testdokumente.personen")
+    # Fehlt nur ein Teil (z. B. weil .gitignore *.docx ausschloss), saehe die
+    # Messung still schlechter aus. Deshalb hier laut abbrechen.
+    fehlend = sorted(d for d in testfall.SOLL if not os.path.exists(os.path.join(testfall.ZIEL, d)))
+    if fehlend:
+        sys.exit(f"{len(fehlend)} von {len(testfall.SOLL)} Testdokumenten fehlen, die Messung waere falsch:\n    "
+                 + "\n    ".join(fehlend)
+                 + "\nNeu erzeugen: venv/bin/python -m werkzeuge.testdokumente.personen")
     ordner.befehl_ordner_hinzufuegen(testfall.ZIEL)
     if os.path.exists(INDEX_FILE):
         return 0.0
