@@ -48,6 +48,7 @@ website/
 *.docx
 # ... ausser den erfundenen Testdokumenten, die gehoeren dazu
 !tests/testdokumente/**/*.docx
+!tests/personendokumente/**/*.docx
 STIMME ERZEUGEN.command
 lockara-fenster.png
 icon_rundlos.png
