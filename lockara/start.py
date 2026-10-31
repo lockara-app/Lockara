@@ -27,7 +27,16 @@ def selbsttest():
     zusaetzliche Datendateien braucht, nicht auf. Hier wird stattdessen
     wirklich importiert, in genau der Umgebung, die spaeter auch beim
     Nutzer laeuft.
+
+    Unter Windows hat die gebaute Lockara.exe kein Konsolenfenster - die
+    Ausgabe ginge verloren. Steht in der Umgebungsvariablen
+    LOCKARA_SELBSTTEST_LOG ein Dateipfad, landet sie dort (so liest der
+    automatische Windows-Bau auf GitHub das Ergebnis aus).
     """
+    log_pfad = os.environ.get("LOCKARA_SELBSTTEST_LOG")
+    if log_pfad:
+        sys.stdout = sys.stderr = open(log_pfad, "w", encoding="utf-8", buffering=1)
+
     pflicht = [
         "onnxruntime", "tokenizers", "numpy", "customtkinter",
     ]
@@ -39,11 +48,15 @@ def selbsttest():
         "pptx": "PowerPoint",
         "pypdfium2": "Seiten fuer Texterkennung",
         "rapidocr": "Texterkennung (RapidOCR)",
-        "Vision": "Texterkennung",
         "watchdog": "Automatische Aktualisierung",
         "cryptography": "Lizenzpruefung",
         "langchain_text_splitters": "Aufteilung in Abschnitte",
     }
+
+    # Apples Texterkennung gibt es nur auf dem Mac. Unter Windows liest
+    # RapidOCR die Scans - ohne diese Weiche fiele dort jeder Selbsttest durch.
+    if sys.platform == "darwin":
+        optional["Vision"] = "Texterkennung"
 
     import importlib
     fehler = 0
